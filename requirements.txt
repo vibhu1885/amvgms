@@ -1,0 +1,10 @@
+streamlit
+pandas
+st-gsheets-connection
+gspread
+gspread-dataframe
+gspread-formatting
+sql_metadata
+validators
+duckdb==0.9.2
+fpdf2
