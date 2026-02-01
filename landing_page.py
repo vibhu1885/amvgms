@@ -66,19 +66,43 @@ st.markdown(f"""
     }}
     .stTextInput, .stSelectbox, .stTextArea {{ width: 100% !important; }}
 
-    /* 5. BUTTONS (300px Fixed) */
+    /* 5. BUTTONS (RESTORED EFFECTS) */
     div.stButton > button {{
-        background-color: #faf9f9;
-        color: #131419;
-        border: 4px solid #fca311;
-        border-radius: 20px;
-        width: 300px; 
-        height: 70px;
-        font-weight: 900;
-        font-size: 18px;
-        margin: 10px auto; 
-        display: block;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        background-color: #faf9f9 !important;
+        color: #131419 !important;
+        border: 4px solid #fca311 !important;
+        border-radius: 20px !important;
+        width: 300px !important; 
+        height: 70px !important;
+        
+        /* Font Styling */
+        font-weight: 900 !important;
+        font-size: 20px !important; /* Increased Size */
+        letter-spacing: 0.5px !important;
+        
+        margin: 10px auto !important; 
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        
+        /* Shadows & Transition */
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3) !important;
+        transition: all 0.3s ease-in-out !important;
+    }}
+    
+    div.stButton > button:hover {{
+        background-color: #a7c957 !important;
+        color: #fff !important;
+        border-color: #a7c957 !important;
+        transform: translateY(-4px) scale(1.02) !important;
+        box-shadow: 0 10px 20px rgba(167, 201, 87, 0.4) !important;
+    }}
+    
+    /* Internal Text Fix */
+    div.stButton > button p {{ 
+        font-weight: 900 !important; 
+        font-size: 20px !important;
+        margin: 0 !important; 
     }}
     
     /* 6. ADMIN SCORECARDS */
@@ -328,9 +352,7 @@ elif st.session_state.page == 'admin_dashboard':
                     if sel != "Select Officer":
                         now = datetime.now().strftime("%d-%m-%Y %H:%M")
                         try:
-                            # 1. Update Sheet: 
-                            # Col 12 (MARKED_OFFICER) = Name Only
-                            # Col 13 (ASSIGN_DATE) = Date Time
+                            # 1. Update Sheet: Col 12 = Name Only, Col 13 = Time
                             cell = ws_g.find(str(row['REFERENCE_NO']))
                             ws_g.update_cell(cell.row, 11, "UNDER PROCESS")
                             ws_g.update_cell(cell.row, 12, sel) # Just the name
@@ -340,17 +362,8 @@ elif st.session_state.page == 'admin_dashboard':
                             st.rerun()
                         except: st.error("Update Failed")
                 else:
-                    # CLEAN DISPLAY: Manually constructing the label "Assigned To: [Name], Assign Date: [Time]"
-                    # Because now the DB stores them separately.
-                    # Note: We read from 'MARKED_OFFICER' (Name) and 'OFFICER_REMARK' (which we reused for Date)
-                    # Ideally, rename columns in sheet. Here we assume Col 13 maps to OFFICER_REMARK in `get_all_records` keys
-                    # If column header in sheet is "ASSIGN_DATE", update key below. 
-                    # Assuming default key 'OFFICER_REMARK' refers to Col 13.
-                    
-                    # NOTE: Ensure your Google Sheet Column 13 header is named correctly. 
-                    # If it is named "ASSIGN_DATE", use row['ASSIGN_DATE']. 
-                    # I will use row.get('ASSIGN_DATE', row.get('OFFICER_REMARK')) to be safe.
-                    
+                    # CLEAN DISPLAY
+                    # Check if ASSIGN_DATE exists (Col 13), otherwise fallback to OFFICER_REMARK
                     assign_date = row.get('ASSIGN_DATE', row.get('OFFICER_REMARK', 'N/A'))
                     
                     st.markdown(f"""
