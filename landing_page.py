@@ -49,7 +49,7 @@ def get_sheet(sheet_name):
 st.set_page_config(page_title="GMS Alambagh", layout="wide")
 
 is_dashboard = st.session_state.page in ['admin_dashboard', 'officer_dashboard']
-container_max_width = "1200px" if is_dashboard else "500px"
+container_max_width = "1200px" if is_dashboard else "480px"
 
 st.markdown(f"""
 <style>
@@ -70,7 +70,7 @@ st.markdown(f"""
 
     /* 3. HEADINGS */
     .hindi-heading {{ text-align: center; color: white; font-weight: 900; font-size: 28px; width: 100%; }}
-    .english-heading {{ text-align: center; color: orange; font-weight: bold; font-size: 26px; margin-bottom: 30px; width: 100%; }}
+    .english-heading {{ text-align: center; color: orange; font-weight: bold; font-size: 22px; margin-bottom: 30px; width: 100%; }}
     .welcome-msg {{ text-align: center; color: #fca311; font-weight: 900; font-size: 24px; margin-bottom: 25px; width: 100%; }}
 
     /* 4. INPUTS */
