@@ -41,7 +41,7 @@ BTN_FONT_WEIGHT = "900"
 st.set_page_config(page_title="GMS Alambagh", layout="centered")
 
 # ==========================================
-# STRICT ALIGNMENT ENGINE (CSS)
+# UPDATED CSS: SELECTIVE ALIGNMENT & SHADOWS
 # ==========================================
 custom_css = f"""
 <style>
@@ -52,43 +52,72 @@ custom_css = f"""
         max-width: 480px !important;
         padding-top: 1.5rem !important;
         margin: 0 auto !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important; 
     }}
 
-    [data-testid="stVerticalBlock"] {{ width: 100% !important; align-items: center !important; }}
-    [data-testid="stImage"] {{ display: flex !important; justify-content: center !important; width: 100% !important; }}
-    [data-testid="stImage"] > img {{ margin: 0 auto !important; }}
+    /* Global Vertical Block - Center standard blocks but allow internal left-align */
+    [data-testid="stVerticalBlock"] {{ 
+        width: 100% !important; 
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important; 
+    }}
 
-    .stButton {{ width: 100% !important; display: flex !important; justify-content: center !important; }}
+    /* Strict Logo Centering */
+    [data-testid="stImage"] {{ 
+        display: flex !important; 
+        justify-content: center !important; 
+        width: 100% !important; 
+        margin-bottom: 10px !important;
+    }}
+
+    /* BUTTONS: STRICT CENTER + DEEP SHADOW */
+    .stButton {{ 
+        width: 100% !important; 
+        display: flex !important; 
+        justify-content: center !important; 
+    }}
     div.stButton > button {{
         background-color: {BTN_BG_COLOR} !important;
         color: {BTN_TEXT_COLOR} !important;
         border: {BTN_BORDER_WIDTH} solid {BTN_BORDER_COLOR} !important;
         border-radius: {BTN_ROUNDNESS} !important;
         width: {BTN_WIDTH} !important; 
-        max-width: 100% !important;
         height: {BTN_HEIGHT} !important;
         margin: 12px auto !important;
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.5) !important; /* Deep Shadow */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }}
     div.stButton > button:hover {{
         background-color: {BTN_HOVER_COLOR} !important;
-        transform: translateY(-4px) scale(1.03) !important;
+        transform: translateY(-5px) !important;
+        box-shadow: 0 12px 24px rgba(167, 201, 87, 0.4) !important;
     }}
-    div.stButton > button p {{ font-size: {BTN_TEXT_SIZE} !important; font-weight: {BTN_FONT_WEIGHT} !important; }}
 
-    .hindi-heading, .english-heading, label, .stMarkdown p {{
-        text-align: center !important;
-        width: 100% !important;
+    /* FORM LABELS: STRICT LEFT ALIGN */
+    label {{ 
+        color: {LABEL_COLOR} !important; 
+        font-weight: bold !important; 
+        text-align: left !important; 
+        width: 100% !important; 
         display: block !important;
+        margin-top: 15px !important;
     }}
+    
+    .hindi-heading, .english-heading {{ text-align: center !important; width: 100% !important; }}
     .hindi-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: 900; }}
     .english-heading {{ color: {HEADING_COLOR}; font-size: 18px; font-weight: bold; margin-bottom: 20px; }}
-    label {{ color: {LABEL_COLOR} !important; font-weight: bold; margin-top: 10px; }}
-    .err-msg {{ color: #FF4B4B; font-size: 13px; font-weight: bold; margin-top: -10px; margin-bottom: 10px; text-align: center; width: 100%; }}
+
+    .err-msg {{ 
+        color: #FF4B4B; 
+        font-size: 13px; 
+        font-weight: bold; 
+        margin-top: -5px; 
+        text-align: left !important; 
+        width: 100%; 
+    }}
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -124,7 +153,7 @@ if st.session_state.page == 'landing':
     if st.button("🔍 ग्रीवांस की वर्तमान स्थिति जानें"): go_to('status_check')
     if st.button("🔐 Officer/ Admin Login"): go_to('login')
 
-# --- PAGE 2: REGISTRATION (RESTORED) ---
+# --- PAGE 2: REGISTRATION ---
 elif st.session_state.page == 'new_form':
     st.markdown('<div class="hindi-heading">Grievance Registration</div>', unsafe_allow_html=True)
     st.markdown('<div class="english-heading">समस्या पंजीकरण</div>', unsafe_allow_html=True)
@@ -171,7 +200,7 @@ elif st.session_state.page == 'new_form':
                     new_row = [ref_no, now, st.session_state.active_hrms, st.session_state.found_emp_name, 
                                emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "NEW", "N/A", "N/A"]
                     ws.append_row(new_row)
-                    st.success(f"Registered! Your Ref No is: {ref_no}")
+                    st.success(f"Registered! Ref No: {ref_no}")
                     st.balloons()
                     st.session_state.hrms_verified = False
                 except Exception as e: st.error(f"Failed: {e}")
@@ -191,17 +220,15 @@ elif st.session_state.page == 'status_check':
                 match = df[df['REFERENCE_NO'].astype(str) == ref_input]
                 if not match.empty:
                     res = match.iloc[0]
-                    st.success(f"Status: {res['STATUS']}")
-                    st.info(f"**Officer Remark:** {res['OFFICER_REMARK']}")
+                    st.markdown(f"### Status: {res['STATUS']}")
+                    st.info(f"**Remarks:** {res['OFFICER_REMARK']}")
                 else: st.error("No record found.")
             except Exception as e: st.error(f"Error: {e}")
     if st.button("⬅️ Back to Home"): go_to('landing')
 
-# --- PAGE 4: SUPERUSER LOGIN ---
+# --- PAGE 4: LOGIN ---
 elif st.session_state.page == 'login':
     st.markdown('<div class="hindi-heading">Superuser Login</div>', unsafe_allow_html=True)
-    st.markdown('<div class="english-heading">अधिकारी लॉगिन</div>', unsafe_allow_html=True)
-
     hrms_locked = st.session_state.super_verified
     s_hrms = st.text_input("Enter Your HRMS ID", value=st.session_state.active_super.get('HRMS_ID', ""), disabled=hrms_locked).upper().strip()
 
@@ -228,7 +255,6 @@ elif st.session_state.page == 'login':
                 elif role == "BOTH": go_to('role_selection')
                 st.rerun()
             else: st.error("❌ Invalid Key.")
-
     if st.button("⬅️ Back to Home"):
         st.session_state.super_verified = False
         st.session_state.active_super = {}
