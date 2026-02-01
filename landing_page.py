@@ -39,13 +39,14 @@ st.set_page_config(page_title="GMS Alambagh", layout="wide")
 # Determine Container Width
 container_max_width = "1200px" if st.session_state.page == 'admin_dashboard' else "480px"
 
+# CSS ENGINE
 st.markdown(f"""
 <style>
-    /* HIDE DEFAULT HEADER/FOOTER */
+    /* HIDE DEFAULT ELEMENTS */
     header, footer, [data-testid="stHeader"] {{ visibility: hidden; height: 0; }}
     .stApp {{ background-color: {APP_BG_COLOR}; }}
 
-    /* 1. MAIN CONTAINER LOCK */
+    /* MAIN CONTAINER LOCK */
     .block-container {{
         max-width: {container_max_width} !important;
         padding-top: 2rem !important;
@@ -54,85 +55,75 @@ st.markdown(f"""
         margin: 0 auto !important;
     }}
 
-    /* 2. LOGO ALIGNMENT (Centered) */
-    [data-testid="stImage"] {{
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        margin-bottom: 15px;
-    }}
+    /* LOGO & HEADING ALIGNMENT */
+    [data-testid="stImage"] {{ display: flex; justify-content: center; width: 100%; margin-bottom: 15px; }}
     [data-testid="stImage"] img {{ margin: 0 auto; }}
-
-    /* 3. HEADING ALIGNMENT */
+    
     .hindi-heading {{ text-align: center; color: white; font-weight: 900; font-size: 22px; margin-bottom: 5px; width: 100%; }}
     .english-heading {{ text-align: center; color: white; font-weight: bold; font-size: 18px; margin-bottom: 30px; width: 100%; }}
     .welcome-msg {{ text-align: center; color: #fca311; font-weight: 900; font-size: 24px; margin-bottom: 25px; width: 100%; }}
 
-    /* 4. INPUTS (Labels Left, Text Left) */
-    .stTextInput label, .stSelectbox label, .stTextArea label {{
-        color: white !important;
-        font-weight: bold !important;
-        text-align: left !important;
-        display: block !important;
-        width: 100%;
-    }}
-    .stTextInput, .stSelectbox, .stTextArea {{ width: 100% !important; }}
-
-    /* 5. GENERAL BUTTONS (Strict 300px, Centered) */
-    .stButton {{
-        display: flex !important;
-        justify-content: center !important;
-        width: 100% !important;
-    }}
+    /* STANDARD BUTTONS (Landing, Login, etc.) */
     div.stButton > button {{
-        background-color: #faf9f9 !important;
-        color: #131419 !important;
-        border: 4px solid #fca311 !important;
-        border-radius: 20px !important;
-        width: 300px !important; 
-        height: 70px !important;
-        font-weight: 900 !important;
-        font-size: 18px !important;
-        margin: 10px auto !important;
+        background-color: #faf9f9;
+        color: #131419;
+        border: 4px solid #fca311;
+        border-radius: 20px;
+        width: 300px; 
+        height: 70px;
+        font-weight: 900;
+        font-size: 18px;
+        margin: 10px auto; /* Centered */
+        display: block;
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }}
-    div.stButton > button:hover {{
-        background-color: #a7c957 !important;
-        transform: scale(1.02);
-    }}
+    div.stButton > button p {{ font-weight: 900 !important; }}
+
+    /* ============================================================
+       ADMIN DASHBOARD SPECIFIC STYLING (THE COLOR FIX)
+       We target buttons based on which column they sit in.
+    ============================================================ */
     
-    /* 6. ADMIN COLOR-CODED BUTTONS (Targeting by Text Content) */
-    /* NEW -> Blue */
-    div.stButton > button:has(p:contains("NEW")) {{
+    /* Column 1: TOTAL (Keep White) */
+    [data-testid="column"]:nth-of-type(1) div.stButton > button {{
+        border-color: white !important;
+        color: #131419 !important;
+    }}
+
+    /* Column 2: NEW (Blue) */
+    [data-testid="column"]:nth-of-type(2) div.stButton > button {{
         background-color: #3498db !important;
         color: white !important;
         border-color: #2980b9 !important;
-        width: 100% !important; /* Flexible width for filter bar */
-        min-width: 100px !important;
     }}
-    /* PROCESS -> Yellow */
-    div.stButton > button:has(p:contains("PROCESS")) {{
+
+    /* Column 3: PROCESS (Yellow) */
+    [data-testid="column"]:nth-of-type(3) div.stButton > button {{
         background-color: #f1c40f !important;
         color: #131419 !important;
         border-color: #f39c12 !important;
-        width: 100% !important;
-        min-width: 100px !important;
     }}
-    /* RESOLVED -> Green */
-    div.stButton > button:has(p:contains("RESOLVED")) {{
+
+    /* Column 4: RESOLVED (Green) */
+    [data-testid="column"]:nth-of-type(4) div.stButton > button {{
         background-color: #2ecc71 !important;
         color: white !important;
         border-color: #27ae60 !important;
-        width: 100% !important;
-        min-width: 100px !important;
     }}
-    /* TOTAL -> White */
-    div.stButton > button:has(p:contains("TOTAL")) {{
-        background-color: white !important;
-        width: 100% !important;
-        min-width: 100px !important;
+    
+    /* Reset Width for Admin Filter Buttons to fit grid */
+    [data-testid="column"] div.stButton > button {{
+        width: 100% !important; /* Fill the column width */
+        min-width: 50px !important;
+        height: 60px !important;
+        margin: 0 !important;
     }}
+
+    /* INPUT STYLING */
+    .stTextInput label, .stSelectbox label, .stTextArea label {{
+        color: white !important; font-weight: bold !important; text-align: left !important; display: block !important;
+    }}
+    .stTextInput, .stSelectbox, .stTextArea {{ width: 100% !important; }}
 
 </style>
 """, unsafe_allow_html=True)
@@ -242,7 +233,7 @@ elif st.session_state.page == 'status_check':
     
     if st.button("🏠 Back to Home"): go_to('landing')
 
-# --- PAGE 4: LOGIN (FIXED) ---
+# --- PAGE 4: LOGIN ---
 elif st.session_state.page == 'login':
     st.markdown('<div class="hindi-heading">Superuser Login</div>', unsafe_allow_html=True)
     
@@ -251,11 +242,9 @@ elif st.session_state.page == 'login':
     
     if not st.session_state.super_verified:
         if st.button("👤 Find User"):
-            # STRICT CHECK: Only proceed if input exists
             if not s_hrms:
                 st.warning("⚠️ Please enter an HRMS ID.")
             else:
-                # GREEN SPINNER
                 with st.spinner("Fetching Details..."):
                     try:
                         df = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
@@ -266,8 +255,7 @@ elif st.session_state.page == 'login':
                             st.rerun()
                         else: st.error("❌ User not found.")
                     except: 
-                        # Suppress weird DB errors and show simple message
-                        st.error("Connection Error. Please try again.")
+                        st.error("Connection Error.")
     else:
         st.success(f"✅ {st.session_state.active_super['NAME']}")
         key = st.text_input("Password", type="password")
@@ -286,29 +274,27 @@ elif st.session_state.page == 'login':
 # --- PAGE 5: ADMIN DASHBOARD ---
 elif st.session_state.page == 'admin_dashboard':
     st.markdown('<div class="hindi-heading" style="font-size:35px;">Admin Dashboard</div>', unsafe_allow_html=True)
-    
-    # BIGGER & COLORED WELCOME MESSAGE
     st.markdown(f'<div class="welcome-msg">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
 
     ws_g = get_sheet("GRIEVANCE")
     df = pd.DataFrame(ws_g.get_all_records())
 
-    # --- CLICKABLE COLOR-CODED OVERSIGHT BUTTONS ---
+    # --- COLOR CODED OVERSIGHT BUTTONS ---
     count_total = len(df)
     count_new = len(df[df['STATUS']=='NEW'])
     count_process = len(df[df['STATUS']=='UNDER PROCESS'])
     count_resolved = len(df[df['STATUS']=='RESOLVED'])
 
+    # These 4 columns trigger the CSS nth-of-type coloring logic defined above
     c1, c2, c3, c4 = st.columns(4)
-    # The CSS defined above handles the colors based on the text string!
-    if c1.button(f"TOTAL ({count_total})"): st.session_state.admin_filter = 'ALL'
-    if c2.button(f"NEW ({count_new})"): st.session_state.admin_filter = 'NEW'
-    if c3.button(f"PROCESS ({count_process})"): st.session_state.admin_filter = 'UNDER PROCESS'
-    if c4.button(f"RESOLVED ({count_resolved})"): st.session_state.admin_filter = 'RESOLVED'
+    if c1.button(f"TOTAL\n({count_total})"): st.session_state.admin_filter = 'ALL'
+    if c2.button(f"NEW\n({count_new})"): st.session_state.admin_filter = 'NEW'
+    if c3.button(f"PROCESS\n({count_process})"): st.session_state.admin_filter = 'UNDER PROCESS'
+    if c4.button(f"RESOLVED\n({count_resolved})"): st.session_state.admin_filter = 'RESOLVED'
 
     st.caption(f"Showing: **{st.session_state.admin_filter}**")
 
-    # Apply Filter
+    # Filter Data
     f_df = df.copy()
     if st.session_state.admin_filter != 'ALL':
         f_df = f_df[f_df['STATUS'] == st.session_state.admin_filter]
@@ -340,12 +326,12 @@ elif st.session_state.page == 'admin_dashboard':
                     if sel != "Select Officer":
                         now = datetime.now().strftime("%d-%m-%Y %H:%M")
                         try:
-                            # Robust Row Finding
+                            # Strict Row Finding to prevent misalignment
                             cell = ws_g.find(str(row['REFERENCE_NO']))
                             ws_g.update_cell(cell.row, 11, "UNDER PROCESS")
                             ws_g.update_cell(cell.row, 12, f"Marked to: {sel} at {now}")
                             st.success("Assigned!")
-                            time.sleep(1) 
+                            time.sleep(0.5)
                             st.rerun()
                         except: st.error("Update Failed")
                 else:
@@ -365,5 +351,4 @@ elif st.session_state.page == 'role_selection':
 elif st.session_state.page == 'officer_dashboard':
     st.markdown('<div class="hindi-heading">Officer Dashboard</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="welcome-msg">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
-    
     if st.button("🚪 Logout"): go_to('landing')
