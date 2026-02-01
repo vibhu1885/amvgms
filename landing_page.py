@@ -200,7 +200,7 @@ elif st.session_state.page == 'new_form':
         g_type = st.selectbox("Grievance Type (समस्या का प्रकार)*", g_types)
         g_text = st.text_area("Brief of Grievance (समस्या का विवरण)*", max_chars=1000)
 
-        if st.button("📤 Grievance जमा करें।"):
+        if st.button("📤 Grievance जमा करें"):
             st.session_state.tried_submit = True
             if not any(x in [None, "", "Select"] for x in [emp_no, emp_desig, emp_trade, emp_sec, g_type, g_text]):
                 try:
@@ -249,7 +249,7 @@ elif st.session_state.page == 'login':
     s_hrms = st.text_input("Enter Your HRMS ID", value=st.session_state.active_super.get('HRMS_ID', ""), disabled=locked).upper().strip()
 
     if not st.session_state.super_verified:
-        if st.button("👤 Find User / यूजर खोजें"):
+        if st.button("👤 Find User"):
             try:
                 df_off = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
                 match = df_off[df_off['HRMS_ID'] == s_hrms]
@@ -264,7 +264,7 @@ elif st.session_state.page == 'login':
         st.success(f"✅ USER Found: {u['NAME']} ({u['RANK']})")
         login_key = st.text_input("Enter Login Key", type="password")
         
-        if st.button("🔓 Login / लॉगिन करें"):
+        if st.button("🔓 Login"):
             if str(login_key) == str(u['LOGIN_KEY']):
                 role = u['ROLE'].upper()
                 if role == "ADMIN": go_to('admin_dashboard')
