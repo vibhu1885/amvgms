@@ -27,6 +27,7 @@ APP_BG_COLOR = "#131419"
 HEADING_COLOR = "#FFFFFF" 
 LABEL_COLOR = "#FFFFFF"   
 
+# Button Master Controls
 BTN_HEIGHT = "70px"        
 BTN_WIDTH = "300px"         
 BTN_BG_COLOR = "#faf9f9"
@@ -169,7 +170,7 @@ elif st.session_state.page == 'new_form':
 
     if not st.session_state.hrms_verified:
         hrms_input = st.text_input("Enter HRMS ID (अपनी HRMS ID दर्ज करें)*", max_chars=6, placeholder="HRMS ID").upper().strip()
-        if st.button("Verify ID / सत्यापित करें"):
+        if st.button("🔎 Verify ID / सत्यापित करें"):
             if len(hrms_input) == 6 and hrms_input.isalpha():
                 try:
                     df = pd.DataFrame(get_sheet("EMPLOYEE_MAPPING").get_all_records())
@@ -179,7 +180,7 @@ elif st.session_state.page == 'new_form':
                         st.session_state.hrms_verified = True
                         st.session_state.active_hrms = hrms_input
                         st.rerun()
-                    else: st.error("❌ HRMS ID not found.")
+                    else: st.error("❌ HRMS ID not found in mapping.")
                 except Exception as e: st.error(f"Mapping Error: {e}")
             else: st.error("⚠️ Use 6 CAPITAL alphabets.")
     else:
@@ -199,7 +200,7 @@ elif st.session_state.page == 'new_form':
         g_type = st.selectbox("Grievance Type (समस्या का प्रकार)*", g_types)
         g_text = st.text_area("Brief of Grievance (समस्या का विवरण)*", max_chars=1000)
 
-        if st.button("Grievance जमा करें"):
+        if st.button("📤 Grievance जमा करें।"):
             st.session_state.tried_submit = True
             if not any(x in [None, "", "Select"] for x in [emp_no, emp_desig, emp_trade, emp_sec, g_type, g_text]):
                 try:
@@ -210,14 +211,14 @@ elif st.session_state.page == 'new_form':
                     new_row = [ref_no, now, st.session_state.active_hrms, st.session_state.found_emp_name, 
                                emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "NEW", "N/A", "N/A"]
                     ws.append_row(new_row)
-                    st.success(f"Registered! Your Ref No is: {ref_no}")
+                    st.success(f"✅ Registered! Your Ref No: {ref_no}")
                     st.balloons()
                     st.session_state.hrms_verified = False
                     if 'tried_submit' in st.session_state: del st.session_state.tried_submit
                 except Exception as e: st.error(f"Critical Error: {e}")
             else: st.rerun()
 
-    if st.button("⬅️ Back to Home"):
+    if st.button("🏠 Back to Home"):
         st.session_state.hrms_verified = False
         if 'tried_submit' in st.session_state: del st.session_state.tried_submit
         go_to('landing')
@@ -235,20 +236,20 @@ elif st.session_state.page == 'status_check':
                     res = match.iloc[0]
                     st.markdown(f"### Status: {res['STATUS']}")
                     st.info(f"**Remarks:** {res['OFFICER_REMARK']}")
-                else: st.error("No record found.")
+                else: st.error("❌ No record found.")
             except Exception as e: st.error(f"Error: {e}")
-    if st.button("⬅️ Back to Home"): go_to('landing')
+    if st.button("🏠 Back to Home"): go_to('landing')
 
-# --- SUPERUSER LOGIN (SEQUENTIAL) ---
+# --- SUPERUSER LOGIN ---
 elif st.session_state.page == 'login':
-    st.markdown('<div class="hindi-heading">Officer/ Admin Login</div>', unsafe_allow_html=True)
-    st.markdown('<div class="english-heading">अधिकारी/ एडमिन लॉगिन</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hindi-heading">Superuser Login</div>', unsafe_allow_html=True)
+    st.markdown('<div class="english-heading">अधिकारी लॉगिन</div>', unsafe_allow_html=True)
 
     locked = st.session_state.super_verified
     s_hrms = st.text_input("Enter Your HRMS ID", value=st.session_state.active_super.get('HRMS_ID', ""), disabled=locked).upper().strip()
 
     if not st.session_state.super_verified:
-        if st.button("Search User"):
+        if st.button("👤 Find User / यूजर खोजें"):
             try:
                 df_off = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
                 match = df_off[df_off['HRMS_ID'] == s_hrms]
@@ -256,14 +257,14 @@ elif st.session_state.page == 'login':
                     st.session_state.active_super = match.iloc[0].to_dict()
                     st.session_state.super_verified = True
                     st.rerun()
-                else: st.error("❌ HRMS ID not found in mapping.")
+                else: st.error("❌ HRMS ID not found.")
             except Exception as e: st.error(f"Error: {e}")
     else:
         u = st.session_state.active_super
         st.success(f"✅ USER Found: {u['NAME']} ({u['RANK']})")
         login_key = st.text_input("Enter Login Key", type="password")
         
-        if st.button("Enter Dashboard"):
+        if st.button("🔓 Login / लॉगिन करें"):
             if str(login_key) == str(u['LOGIN_KEY']):
                 role = u['ROLE'].upper()
                 if role == "ADMIN": go_to('admin_dashboard')
@@ -272,7 +273,7 @@ elif st.session_state.page == 'login':
                 st.rerun()
             else: st.error("❌ Invalid Key.")
 
-    if st.button("⬅️ Back to Home"):
+    if st.button("🏠 Back to Home"):
         st.session_state.super_verified = False
         st.session_state.active_super = {}
         go_to('landing')
@@ -286,8 +287,8 @@ elif st.session_state.page == 'role_selection':
 # --- DASHBOARD PLACEHOLDERS ---
 elif st.session_state.page == 'admin_dashboard':
     st.markdown('<div class="hindi-heading">Admin Dashboard</div>', unsafe_allow_html=True)
-    if st.button("Logout"): go_to('landing')
+    if st.button("🚪 Logout"): go_to('landing')
 
 elif st.session_state.page == 'officer_dashboard':
     st.markdown('<div class="hindi-heading">Officer Dashboard</div>', unsafe_allow_html=True)
-    if st.button("Logout"): go_to('landing')
+    if st.button("🚪 Logout"): go_to('landing')
