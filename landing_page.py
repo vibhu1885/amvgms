@@ -23,9 +23,6 @@ BTN_HOVER_COLOR = "#a7c957"
 BTN_TEXT_SIZE = "17px"     
 BTN_FONT_WEIGHT = "900"    
 
-# Label Styling
-LABEL_FONT_SIZE = "18px"
-
 # ==========================================
 # THE GLOBAL ALIGNMENT ENGINE (CSS)
 # ==========================================
@@ -78,42 +75,36 @@ custom_css = f"""
         color: {BTN_TEXT_COLOR} !important;
     }}
 
-    div.stButton > button:hover {{
-        background-color: {BTN_HOVER_COLOR} !important;
-        transform: translateY(-2px);
-    }}
+    .hindi-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: 900; text-align: center; }}
+    .english-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: bold; margin-bottom: 20px; text-align: center; }}
 
-    .hindi-heading, .english-heading, p, label, .stMarkdown {{
-        text-align: center !important;
-        width: 100% !important;
-        color: {LABEL_COLOR} !important;
-    }}
-
-    .hindi-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: 900; margin-top: 0px; }}
-    .english-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: bold; margin-bottom: 20px; }}
-
-    [data-testid="stTextInput"], [data-testid="stTextArea"], [data-testid="stSelectbox"] {{
-        width: 100% !important;
-    }}
-    
-    /* Error text styling */
-    .err-text {{ color: #e63946; font-size: 14px; margin-top: -10px; margin-bottom: 10px; }}
+    .err-text {{ color: #e63946; font-size: 14px; text-align: center; margin-bottom: 5px; }}
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
 
 # ==========================================
-# MOCK DATABASE FUNCTIONS (Link your API here)
+# DATABASE LOOKUP LOGIC
 # ==========================================
-def get_dropdown_options(column_name):
-    # Logic to pull from DROPDOWN_MAPPINGS sheet
-    # Returning lists for now
-    options = {
-        "Designation": ["Select", "SSE", "JE", "Technician", "Helper"],
-        "Trade": ["Select", "Fitter", "Welder", "Painter", "Carpenter"],
-        "GrievanceType": ["Select", "Leave", "Salary", "Quarter", "Transfer"]
+def check_hrms_id(search_id):
+    """
+    This is where your Google Sheets API integration goes.
+    You will load the sheet 'EMPLOYEE_MAPPING' and look for HRMS_ID.
+    """
+    # Replace this mock dictionary with your actual sheet reading logic
+    # Example: df = read_google_sheet("EMPLOYEE_MAPPING")
+    # result = df[df['HRMS_ID'] == search_id]
+    
+    mapping_data = {
+        "ABCDEF": "Maitri Singh",
+        "RWAILW": "Rajesh Kumar",
+        "LKOAMV": "Suresh Yadav"
     }
-    return options.get(column_name, ["Select"])
+    return mapping_data.get(search_id, None)
+
+def get_dropdown_options(sheet_name, column_name):
+    # This will pull lists from your DROPDOWN_MAPPINGS sheet
+    return ["Select", "Option 1", "Option 2", "Option 3"] # Mock
 
 # ==========================================
 # PAGE NAVIGATION & STATE
@@ -121,6 +112,7 @@ def get_dropdown_options(column_name):
 if 'page' not in st.session_state: st.session_state.page = 'landing'
 if 'hrms_verified' not in st.session_state: st.session_state.hrms_verified = False
 if 'found_emp_name' not in st.session_state: st.session_state.found_emp_name = ""
+if 'active_hrms' not in st.session_state: st.session_state.active_hrms = ""
 
 def go_to(page_name):
     st.session_state.page = page_name
@@ -144,76 +136,49 @@ elif st.session_state.page == 'new_form':
     st.markdown('<div class="hindi-heading">Grievance Registration</div>', unsafe_allow_html=True)
     st.markdown('<div class="english-heading" style="font-size:18px;">समस्या पंजीकरण</div>', unsafe_allow_html=True)
 
-    # 1. HRMS Verification Section
+    # 1. HRMS Verification Section (Disappears after success)
     if not st.session_state.hrms_verified:
         hrms_input = st.text_input("Enter HRMS ID (अपनी HRMS ID दर्ज करें)*", max_chars=6, placeholder="HRMS ID").upper().strip()
+        
         if st.button("Verify ID / सत्यापित करें"):
             if len(hrms_input) == 6 and hrms_input.isalpha():
-                # Actual lookup logic for EMPLOYEE_MAPPING here
-                if hrms_input == "ABCDEF": # Test Case
-                    st.session_state.found_emp_name = "Maitri Singh"
+                # CALL THE DATABASE FUNCTION
+                employee_name = check_hrms_id(hrms_input)
+                
+                if employee_name:
+                    st.session_state.found_emp_name = employee_name
+                    st.session_state.active_hrms = hrms_input
                     st.session_state.hrms_verified = True
-                    st.rerun()
+                    st.rerun() # Refresh to hide this section and show the form
                 else:
-                    st.error("❌ HRMS ID not found.")
+                    st.error("❌ HRMS ID not found in mapping sheet.")
             else:
                 st.error("⚠️ Invalid Format! Use 6 CAPITAL alphabets.")
     
-    # 2. Form Section (Appears after verification)
+    # 2. Form Section (Appears only after verification)
     else:
         st.success(f"✅ Employee Found: {st.session_state.found_emp_name}")
         
         emp_name = st.text_input("Employee Name (कर्मचारी का नाम)*", value=st.session_state.found_emp_name, disabled=True)
-        emp_no = st.text_input("Employee Number (कर्मचारी संख्या)*", placeholder="Numbers/Letters only")
-        
-        designations = get_dropdown_options("Designation")
-        emp_desig = st.selectbox("Employee Designation (कर्मचारी का पद)*", designations)
-        
-        trades = get_dropdown_options("Trade")
-        emp_trade = st.selectbox("Employee Trade (कर्मचारी का ट्रेड)*", trades)
-        
+        emp_no = st.text_input("Employee Number (कर्मचारी संख्या)*")
+        emp_desig = st.selectbox("Employee Designation (कर्मचारी का पद)*", get_dropdown_options("DROPDOWN_MAPPINGS", "Designation"))
+        emp_trade = st.selectbox("Employee Trade (कर्मचारी का ट्रेड)*", get_dropdown_options("DROPDOWN_MAPPINGS", "Trade"))
         emp_sec = st.text_input("Employee Section (कर्मचारी का कार्यस्थल)*")
-        
-        g_types = get_dropdown_options("GrievanceType")
-        g_type = st.selectbox("Grievance Type (समस्या का प्रकार)*", g_types)
-        
-        g_text = st.text_area("Brief of Grievance (समस्या का विवरण)*", max_chars=1000, height=150)
+        g_type = st.selectbox("Grievance Type (समस्या का प्रकार)*", get_dropdown_options("DROPDOWN_MAPPINGS", "Grievance"))
+        g_text = st.text_area("Brief of Grievance (समस्या का विवरण)*", max_chars=1000)
 
-        # Submit Logic
         if st.button("✅ Submit Grievance"):
-            # Check mandatory fields
-            errors = []
-            if not emp_no: errors.append("Employee Number is required.")
-            if emp_desig == "Select": errors.append("Please select Designation.")
-            if emp_trade == "Select": errors.append("Please select Trade.")
-            if not emp_sec: errors.append("Section is required.")
-            if g_type == "Select": errors.append("Please select Grievance Type.")
-            if not g_text: errors.append("Brief of Grievance is required.")
-
-            if errors:
-                for err in errors:
-                    st.markdown(f'<p class="err-text">{err}</p>', unsafe_allow_html=True)
+            # Mandatory Check Logic
+            fields = [emp_no, emp_desig, emp_trade, emp_sec, g_type, g_text]
+            if any(f == "" or f == "Select" for f in fields):
+                st.markdown('<p class="err-text">⚠️ All fields marked with * are mandatory!</p>', unsafe_allow_html=True)
             else:
-                # TIMESTAMP LOGIC
-                submission_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                ref_no = "REF" + datetime.now().strftime("%y%m%d%H%M%S")
-                
-                # --- DATA COLLECTION FOR EXCEL ---
-                # data = [ref_no, submission_time, hrms_input, emp_name, emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "Pending", "N/A", "N/A"]
-                # send_to_sheet(data)
-                
-                st.success(f"Grievance Registered! Ref No: {ref_no}")
+                # TIMESTAMP & GOOGLE SHEETS SUBMISSION
+                now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+                # write_to_grievance_sheet(...)
+                st.success("Grievance Submitted Successfully!")
                 st.balloons()
 
     if st.button("⬅️ Back to Home"):
         st.session_state.hrms_verified = False
         go_to('landing')
-
-# --- OTHER PAGES ---
-elif st.session_state.page == 'status_check':
-    st.markdown('<div class="hindi-heading">स्थिति जांचें</div>', unsafe_allow_html=True)
-    if st.button("⬅️ Back to Home"): go_to('landing')
-
-elif st.session_state.page == 'login':
-    st.markdown('<div class="hindi-heading">Admin Login</div>', unsafe_allow_html=True)
-    if st.button("⬅️ Back to Home"): go_to('landing')
