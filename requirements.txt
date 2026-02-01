@@ -1,6 +1,6 @@
 streamlit
-pandas
 st-gsheets-connection
+pandas
 gspread
 gspread-dataframe
 gspread-formatting
