@@ -12,7 +12,7 @@ import gspread
 # 0. SETUP & TIMEZONE
 # ==========================================
 LOGO_PATH = "assets/office_logo.png"
-LOGO_WIDTH = 240
+LOGO_WIDTH = 350
 APP_BG_COLOR = "#131419"
 
 # Initialize State
