@@ -75,7 +75,7 @@ st.markdown(f"""
 
     /* 4. INPUTS */
     .stTextInput label, .stSelectbox label, .stTextArea label {{
-        color: white !important; font-weight: bold !important; text-align: left !important; display: block !important; width: 100%;
+        color: white !important; font-weight: 700 !important; text-align: left !important; display: block !important; width: 100%;
     }}
     .stTextInput, .stSelectbox, .stTextArea {{ width: 100% !important; }}
 
