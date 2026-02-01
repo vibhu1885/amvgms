@@ -248,7 +248,7 @@ elif st.session_state.page == 'login':
     s_hrms = st.text_input("Enter Your HRMS ID", value=st.session_state.active_super.get('HRMS_ID', ""), disabled=locked).upper().strip()
 
     if not st.session_state.super_verified:
-        if st.button("SEARCH USER"):
+        if st.button("Search User"):
             try:
                 df_off = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
                 match = df_off[df_off['HRMS_ID'] == s_hrms]
@@ -263,7 +263,7 @@ elif st.session_state.page == 'login':
         st.success(f"✅ USER Found: {u['NAME']} ({u['RANK']})")
         login_key = st.text_input("Enter Login Key", type="password")
         
-        if st.button("ENTER DASHBOARD"):
+        if st.button("Enter Dashboard"):
             if str(login_key) == str(u['LOGIN_KEY']):
                 role = u['ROLE'].upper()
                 if role == "ADMIN": go_to('admin_dashboard')
