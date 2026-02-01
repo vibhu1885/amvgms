@@ -8,12 +8,13 @@ import gspread
 # ==========================================
 # 0. GOOGLE SHEETS CONNECTION SETUP
 # ==========================================
-# Ensure your 'credentials.json' is in the root folder
 def get_sheet(sheet_name):
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = Credentials.from_service_account_file("credentials.json", scopes=scope)
+    # Pulling credentials directly from Streamlit Secrets
+    creds_info = st.secrets["gcp_service_account"]
+    creds = Credentials.from_service_account_info(creds_info, scopes=scope)
     client = gspread.authorize(creds)
-    # Open your specific workbook
+    # Open the workbook and specific sheet
     sheet = client.open("Grievance_DB").worksheet(sheet_name)
     return sheet
 
@@ -47,6 +48,7 @@ custom_css = f"""
 <style>
     header, footer, [data-testid="stHeader"] {{ visibility: hidden; height: 0; }}
     .stApp {{ background-color: {APP_BG_COLOR}; }}
+
     .block-container {{
         max-width: 480px !important;
         padding-top: 2rem !important;
@@ -54,9 +56,20 @@ custom_css = f"""
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important; 
+        justify-content: flex-start !important;
     }}
-    [data-testid="stVerticalBlock"] {{ width: 100% !important; align-items: center !important; }}
-    [data-testid="stImage"] {{ display: flex !important; justify-content: center !important; }}
+
+    [data-testid="stVerticalBlock"] {{
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+    }}
+
+    [data-testid="stImage"] {{ display: flex !important; justify-content: center !important; width: 100% !important; margin-bottom: 6px !important; }}
+
+    .stButton {{ width: 100% !important; display: flex !important; justify-content: center !important; }}
+
     div.stButton > button {{
         background-color: {BTN_BG_COLOR} !important;
         color: {BTN_TEXT_COLOR} !important;
@@ -64,14 +77,34 @@ custom_css = f"""
         border-radius: {BTN_ROUNDNESS} !important;
         width: {BTN_WIDTH} !important; 
         height: {BTN_HEIGHT} !important;
+        display: flex !important; align-items: center !important; justify-content: center !important;
+        margin: 10px 0px !important;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }}
+
+    div.stButton > button p {{
         font-size: {BTN_TEXT_SIZE} !important;
         font-weight: {BTN_FONT_WEIGHT} !important;
-        margin: 10px 0px !important;
+        color: {BTN_TEXT_COLOR} !important;
     }}
-    div.stButton > button p {{ font-size: {BTN_TEXT_SIZE} !important; font-weight: {BTN_FONT_WEIGHT} !important; }}
-    .hindi-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: 900; text-align: center; }}
-    .english-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: bold; margin-bottom: 20px; text-align: center; }}
-    .err-text {{ color: #e63946; font-size: 14px; text-align: center; font-weight: bold; }}
+
+    div.stButton > button:hover {{ background-color: {BTN_HOVER_COLOR} !important; transform: translateY(-2px); }}
+
+    .hindi-heading, .english-heading, p, label, .stMarkdown {{
+        text-align: center !important;
+        width: 100% !important;
+        color: {LABEL_COLOR} !important;
+    }}
+
+    .hindi-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: 900; margin-top: 0px; }}
+    .english-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: bold; margin-bottom: 20px; }}
+
+    [data-testid="stTextInput"], [data-testid="stTextArea"], [data-testid="stSelectbox"] {{
+        width: 100% !important;
+    }}
+    
+    .err-text {{ color: #e63946; font-size: 14px; text-align: center; font-weight: bold; margin-bottom: 10px; }}
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -90,14 +123,17 @@ def go_to(page_name):
 # PAGE CONTENT
 # ==========================================
 
+# --- PAGE 1: LANDING ---
 if st.session_state.page == 'landing':
-    if os.path.exists(LOGO_PATH): st.image(LOGO_PATH, width=LOGO_WIDTH)
+    if os.path.exists(LOGO_PATH):
+        st.image(LOGO_PATH, width=LOGO_WIDTH)
     st.markdown('<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
     st.markdown('<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
     if st.button("📝 नया Grievance दर्ज करें"): go_to('new_form')
     if st.button("🔍 ग्रीवांस की वर्तमान स्थिति जानें"): go_to('status_check')
     if st.button("🔐 Officer/ Admin Login"): go_to('login')
 
+# --- PAGE 2: REGISTRATION ---
 elif st.session_state.page == 'new_form':
     st.markdown('<div class="hindi-heading">Grievance Registration</div>', unsafe_allow_html=True)
     st.markdown('<div class="english-heading" style="font-size:18px;">समस्या पंजीकरण</div>', unsafe_allow_html=True)
@@ -108,12 +144,8 @@ elif st.session_state.page == 'new_form':
         if st.button("Verify ID / सत्यापित करें"):
             if len(hrms_id) == 6 and hrms_id.isalpha():
                 try:
-                    # 1. Access the mapping sheet
                     mapping_ws = get_sheet("EMPLOYEE_MAPPING")
-                    data = mapping_ws.get_all_records()
-                    df = pd.DataFrame(data)
-                    
-                    # 2. Search for the ID
+                    df = pd.DataFrame(mapping_ws.get_all_records())
                     match = df[df['HRMS_ID'] == hrms_id]
                     
                     if not match.empty:
@@ -129,17 +161,15 @@ elif st.session_state.page == 'new_form':
                 st.error("⚠️ Invalid Format! Use 6 CAPITAL alphabets.")
     
     else:
-        # FORM SECTION
+        # FORM SECTION - Appears after verification
         st.success(f"✅ Employee Found: {st.session_state.found_emp_name}")
         
-        # Pull Dropdowns from Sheet 4
         try:
             dd_ws = get_sheet("DROPDOWN_MAPPINGS")
             dd_df = pd.DataFrame(dd_ws.get_all_records())
-            
-            designations = ["Select"] + dd_df['DESIGNATION'].dropna().tolist()
-            trades = ["Select"] + dd_df['TRADE'].dropna().tolist()
-            g_types = ["Select"] + dd_df['GRIEVANCE_TYPE'].dropna().tolist()
+            designations = ["Select"] + dd_df['DESIGNATION'].dropna().unique().tolist()
+            trades = ["Select"] + dd_df['TRADE'].dropna().unique().tolist()
+            g_types = ["Select"] + dd_df['GRIEVANCE_TYPE'].dropna().unique().tolist()
         except:
             designations = trades = g_types = ["Select", "Error Loading"]
 
@@ -152,17 +182,16 @@ elif st.session_state.page == 'new_form':
         g_text = st.text_area("Brief of Grievance (समस्या का विवरण)*", max_chars=1000)
 
         if st.button("✅ Submit Grievance"):
-            if any(x in [None, "", "Select"] for x in [emp_no, emp_desig, emp_trade, emp_sec, g_type, g_text]):
+            form_data = [emp_no, emp_desig, emp_trade, emp_sec, g_type, g_text]
+            if any(x in [None, "", "Select"] for x in form_data):
                 st.markdown('<p class="err-text">⚠️ All fields marked with * are mandatory!</p>', unsafe_allow_html=True)
             else:
-                # TIMESTAMP & REFERENCE
                 now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
                 ref_no = "REF" + datetime.now().strftime("%y%m%d%H%M%S")
-                
-                # WRITE TO SHEET 3 (Grievance)
                 try:
                     grievance_ws = get_sheet("grievance")
-                    new_row = [ref_no, now, st.session_state.active_hrms, emp_name, emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "Pending", "N/A", "N/A"]
+                    new_row = [ref_no, now, st.session_state.active_hrms, st.session_state.found_emp_name, 
+                               emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "Pending", "N/A", "N/A"]
                     grievance_ws.append_row(new_row)
                     st.success(f"Grievance Submitted! Ref No: {ref_no}")
                     st.balloons()
@@ -172,3 +201,12 @@ elif st.session_state.page == 'new_form':
     if st.button("⬅️ Back to Home"):
         st.session_state.hrms_verified = False
         go_to('landing')
+
+# --- OTHER PAGES ---
+elif st.session_state.page == 'status_check':
+    st.markdown('<div class="hindi-heading">Check Status</div>', unsafe_allow_html=True)
+    if st.button("⬅️ Back to Home"): go_to('landing')
+
+elif st.session_state.page == 'login':
+    st.markdown('<div class="hindi-heading">Admin Login</div>', unsafe_allow_html=True)
+    if st.button("⬅️ Back to Home"): go_to('landing')
