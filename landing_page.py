@@ -240,9 +240,10 @@ elif st.session_state.page == 'new_form':
 # --- PAGE 3: STATUS CHECK (COLOR CODED BACKGROUNDS) ---
 elif st.session_state.page == 'status_check':
     st.markdown('<div class="hindi-heading">Grievance History</div>', unsafe_allow_html=True)
-    hrms_in = st.text_input("Enter Your HRMS ID").upper().strip()
+    st.markdown('<div class="hindi-heading"></div>', unsafe_allow_html=True)
+    hrms_in = st.text_input("Enter Your HRMS ID (अपनी HRMS ID दर्ज करें)").upper().strip()
     
-    if st.button("🔍 Find Records"):
+    if st.button("🔍 Find Grievances"):
         if not hrms_in: 
             st.warning("⚠️ Please enter HRMS ID.")
         else:
@@ -265,9 +266,9 @@ elif st.session_state.page == 'status_check':
                         extra_details = ""
                         
                         if status == "NEW":
-                            bg_color = "#e3f2fd" # Light Blue BG
+                            bg_color = "#FFF" # Light Blue BG
                             border_color = "#1565c0"
-                            action_text = "Yet to Assign"
+                            action_text = "NEW, Assign Pending"
                             action_class = "badge-new"
                         elif status == "UNDER PROCESS":
                             bg_color = "#fff9c4" # Light Yellow BG
