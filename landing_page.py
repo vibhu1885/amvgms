@@ -439,7 +439,7 @@ elif st.session_state.page == 'admin_dashboard':
                             st.success("Grievance Officer Successfully Assigned!")
                             time.sleep(0.5)
                             st.rerun()
-                        except: st.error("Grievance status changed refresh page to see updated Status")
+                        except: st.error("Grievance status changed, changes in status might take few seconds to reflect in dashboard")
                 else:
                     assign_date = row.get('ASSIGN_DATE', row.get('OFFICER_REMARK', 'N/A')) 
                     st.markdown(f"""
@@ -537,7 +537,7 @@ elif st.session_state.page == 'officer_dashboard':
                                 st.success("Resolved Successfully!")
                                 time.sleep(0.5)
                                 st.rerun()
-                            except: st.error("Grievance status changed refresh page to see updated Status")
+                            except: st.error("Grievance status changed to resolved, changes in status might take few seconds to reflect in dashboard")
                 else:
                     st.markdown(f"""
                     <div style="background-color: #2c2e3a; padding: 10px; border-radius: 8px;">
