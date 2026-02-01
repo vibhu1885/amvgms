@@ -454,7 +454,20 @@ elif st.session_state.page == 'admin_dashboard':
         st.session_state.super_verified = False
         go_to('landing')
 
-# --- PAGE 6: OFFICER DASHBOARD ---
+# --- PAGE 6: ROLE SELECTION (For Users with 'BOTH' Role) ---
+elif st.session_state.page == 'role_selection':
+    st.markdown('<div class="hindi-heading">Select Dashboard</div>', unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True) # Spacer
+
+    if st.button("🛠️ Admin Dashboard"): go_to('admin_dashboard')
+    if st.button("📋 Officer Dashboard"): go_to('officer_dashboard')
+    
+    st.markdown("---")
+    if st.button("🚪 Logout"):
+        st.session_state.super_verified = False
+        go_to('landing')
+
+# --- PAGE 7: OFFICER DASHBOARD ---
 elif st.session_state.page == 'officer_dashboard':
     st.markdown('<div class="hindi-heading" style="font-size:35px;">Officer Dashboard</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="welcome-msg">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
