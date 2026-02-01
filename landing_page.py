@@ -322,15 +322,15 @@ elif st.session_state.page == 'admin_dashboard':
                 st.markdown(f"<span class='detail-label'>Description:</span>", unsafe_allow_html=True)
                 st.info(f"{row['GRIEVANCE_TEXT']}")
 
-                # ACTION LOGIC
+                # ACTION / DISPLAY LOGIC
                 if row['STATUS'] == "NEW":
                     act_col, _ = st.columns([4, 4])
                     sel = act_col.selectbox("Assign To:", officers, key=f"adm_{i}")
                     if sel != "Select Officer":
                         now = datetime.now().strftime("%d-%m-%Y %H:%M")
                         try:
-                            # SAVE COMBINED STRING: Name + Time in Column 12
-                            # We leave Column 13 empty for now (reserved for officer's own remark)
+                            # 1. SAVE PURE DATA: "Name (Rank) at Time"
+                            # NO "Marked to:" prefix.
                             combined_text = f"{sel} at {now}"
                             
                             cell = ws_g.find(str(row['REFERENCE_NO']))
@@ -342,11 +342,11 @@ elif st.session_state.page == 'admin_dashboard':
                             st.rerun()
                         except: st.error("Update Failed")
                 else:
-                    # CLEAN DISPLAY
+                    # CLEAN DISPLAY: Prepend "Assigned To:" only here in the UI
                     st.markdown(f"""
                     <div style="background-color: #2c2e3a; padding: 10px; border-radius: 8px; border: 1px solid #444;">
                         <span style="color: #fca311; font-weight: bold;">Assigned To:</span> 
-                        <span style="color: white; font-weight: bold;">{row['MARKED_OFFICER']}</span>
+                        <span style="color: white;">{row['MARKED_OFFICER']}</span>
                     </div>
                     """, unsafe_allow_html=True)
                 
