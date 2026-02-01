@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import time
 import pytz
-import textwrap # Added to fix the HTML indentation issue
+import textwrap  # <--- CRITICAL IMPORT FOR FIXING HTML
 from datetime import datetime
 from google.oauth2.service_account import Credentials
 import gspread
@@ -64,20 +64,22 @@ st.markdown(f"""
         margin: 0 auto !important;
     }}
 
-    /* 2. LOGO & HEADINGS */
+    /* 2. LOGO */
     [data-testid="stImage"] {{ display: flex; justify-content: center; width: 100%; margin-bottom: 15px; }}
     [data-testid="stImage"] img {{ margin: 0 auto; }}
+
+    /* 3. HEADINGS */
     .hindi-heading {{ text-align: center; color: white; font-weight: 900; font-size: 22px; width: 100%; }}
     .english-heading {{ text-align: center; color: white; font-weight: bold; font-size: 18px; margin-bottom: 30px; width: 100%; }}
     .welcome-msg {{ text-align: center; color: #fca311; font-weight: 900; font-size: 24px; margin-bottom: 25px; width: 100%; }}
 
-    /* 3. INPUTS */
+    /* 4. INPUTS */
     .stTextInput label, .stSelectbox label, .stTextArea label {{
         color: white !important; font-weight: bold !important; text-align: left !important; display: block !important; width: 100%;
     }}
     .stTextInput, .stSelectbox, .stTextArea {{ width: 100% !important; }}
 
-    /* 4. BUTTONS */
+    /* 5. BUTTONS (300px Fixed) */
     div.stButton > button {{
         background-color: #faf9f9 !important;
         color: #131419 !important;
@@ -99,7 +101,13 @@ st.markdown(f"""
         transform: translateY(-4px) scale(1.02) !important;
     }}
     
-    /* 5. SCORECARDS */
+    div.stButton > button p {{ 
+        font-weight: 900 !important; 
+        font-size: 20px !important;
+        margin: 0 !important; 
+    }}
+    
+    /* 6. SCORECARDS */
     .score-container {{ display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }}
     .score-card {{
         flex: 1; min-width: 150px; padding: 15px; border-radius: 12px; text-align: center;
@@ -108,7 +116,7 @@ st.markdown(f"""
     .score-number {{ font-size: 28px; line-height: 1.2; }}
     .score-label {{ font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }}
 
-    /* 6. STATUS CARD STYLE (FIXED) */
+    /* 7. STATUS CARD STYLE */
     .g-card {{
         background-color: white;
         border-radius: 12px;
@@ -122,7 +130,7 @@ st.markdown(f"""
     .g-label {{ font-size: 12px; font-weight: bold; color: #888; text-transform: uppercase; margin-top: 12px; }}
     .g-value {{ font-size: 16px; color: #222; font-weight: 500; line-height: 1.4; }}
     
-    /* BADGES (Pill Shape) */
+    /* Action Badges */
     .badge-base {{ display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 900; margin-top: 5px; }}
     .badge-new {{ background-color: #e3f2fd; color: #1976d2; }}
     .badge-process {{ background-color: #fff3cd; color: #856404; }}
@@ -136,6 +144,10 @@ st.markdown(f"""
         color: #444;
         border-radius: 0 5px 5px 0;
     }}
+
+    /* Table Details */
+    .detail-label {{ color: #fca311; font-weight: bold; font-size: 14px; }}
+    .detail-val {{ color: white; font-weight: normal; font-size: 14px; margin-bottom: 5px; }}
 
 </style>
 """, unsafe_allow_html=True)
@@ -224,7 +236,7 @@ elif st.session_state.page == 'new_form':
         st.session_state.hrms_verified = False
         go_to('landing')
 
-# --- PAGE 3: STATUS CHECK (FIXED CARD RENDER) ---
+# --- PAGE 3: STATUS CHECK (FIXED RENDERING) ---
 elif st.session_state.page == 'status_check':
     st.markdown('<div class="hindi-heading">Grievance History</div>', unsafe_allow_html=True)
     hrms_in = st.text_input("Enter Your HRMS ID").upper().strip()
@@ -239,7 +251,7 @@ elif st.session_state.page == 'status_check':
                 
                 if not matches.empty:
                     st.success(f"Found {len(matches)} Record(s)")
-                    matches = matches.iloc[::-1] # Reverse order
+                    matches = matches.iloc[::-1]
                     
                     for i, row in matches.iterrows():
                         status = row['STATUS']
@@ -256,22 +268,22 @@ elif st.session_state.page == 'status_check':
                             border_color = "#f1c40f"
                             action_text = "Assigned to Related Officer"
                             action_class = "badge-process"
-                            # Add Assignment Details
+                            # Dedent this string so it's not treated as code
                             assign_date = row.get('ASSIGN_DATE', 'N/A')
-                            extra_details = f"""
+                            extra_details = textwrap.dedent(f"""
                             <div style="margin-top:10px;">
                                 <span style="font-weight:bold; color:#555;">Assigned On:</span> {assign_date}
-                            </div>"""
+                            </div>""")
                         elif status == "RESOLVED":
                             border_color = "#2ecc71"
                             action_text = "Resolved"
                             action_class = "badge-resolved"
-                            # Add All Details
+                            # Dedent this string too
                             assign_date = row.get('ASSIGN_DATE', 'N/A')
                             resolve_date = row.get('RESOLVE_DATE', 'N/A')
                             officer = row.get('MARKED_OFFICER', 'N/A')
                             remark = row.get('OFFICER_REMARK', 'N/A')
-                            extra_details = f"""
+                            extra_details = textwrap.dedent(f"""
                             <div style="margin-top:10px;">
                                 <div><span style="font-weight:bold; color:#555;">Assigned On:</span> {assign_date}</div>
                                 <div><span style="font-weight:bold; color:#555;">Resolved On:</span> {resolve_date}</div>
@@ -279,9 +291,10 @@ elif st.session_state.page == 'status_check':
                                     <b>Remark by {officer}:</b><br>
                                     "{remark}"
                                 </div>
-                            </div>"""
+                            </div>""")
 
-                        # Use textwrap.dedent to strip indentation so Markdown renders HTML correctly
+                        # The main card string
+                        # Using textwrap.dedent ensures clean HTML rendering
                         card_html = textwrap.dedent(f"""
                         <div class="g-card" style="border-left-color: {border_color};">
                             <div class="g-ref">Ref No: {row['REFERENCE_NO']}</div>
