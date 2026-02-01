@@ -65,7 +65,7 @@ st.markdown(f"""
     }}
 
     /* 2. LOGO */
-    [data-testid="stImage"] {{ display: flex; justify-content: center; width: 100%; margin-bottom: 15px; }}
+    [data-testid="stImage"] {{ display: flex; justify-content: center; width: 100%; margin-bottom: 0px; }}
     [data-testid="stImage"] img {{ margin: 0 auto; }}
 
     /* 3. HEADINGS */
