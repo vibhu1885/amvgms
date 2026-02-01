@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import pandas as pd
+import time
 from datetime import datetime
 from google.oauth2.service_account import Credentials
 import gspread
@@ -17,6 +18,7 @@ if 'page' not in st.session_state: st.session_state.page = 'landing'
 if 'hrms_verified' not in st.session_state: st.session_state.hrms_verified = False
 if 'super_verified' not in st.session_state: st.session_state.super_verified = False
 if 'active_super' not in st.session_state: st.session_state.active_super = {}
+if 'admin_filter' not in st.session_state: st.session_state.admin_filter = 'ALL' # Default filter
 
 # DATABASE CONNECT
 def get_sheet(sheet_name):
@@ -103,9 +105,8 @@ st.markdown(f"""
     }}
     div.stButton > button p {{ font-weight: 900 !important; margin: 0 !important; }}
 
-    /* 6. ADMIN CARDS */
-    .card-box {{ display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }}
-    .card {{ background: white; padding: 15px; border-radius: 10px; text-align: center; font-weight: 900; color: #131419; min-width: 140px; flex: 1; }}
+    /* 6. ADMIN SPECIFIC STYLES */
+    .welcome-msg {{ text-align: center; color: #fca311; font-weight: 900; font-size: 26px; margin-bottom: 25px; width: 100%; }}
 
 </style>
 """, unsafe_allow_html=True)
@@ -130,15 +131,10 @@ def generate_ref_no(hrms_id, df_grievance):
 
 # --- PAGE 1: LANDING ---
 if st.session_state.page == 'landing':
-    # 1. Logo (Centered)
-    if os.path.exists(LOGO_PATH): 
-        st.image(LOGO_PATH, width=LOGO_WIDTH)
-    
-    # 2. Headings (Centered, Below Logo)
+    if os.path.exists(LOGO_PATH): st.image(LOGO_PATH, width=LOGO_WIDTH)
     st.markdown('<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
     st.markdown('<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
     
-    # 3. Buttons (Centered, 300px)
     if st.button("📝 नया Grievance दर्ज करें"): go_to('new_form')
     if st.button("🔍 ग्रीवांस की वर्तमान स्थिति जानें"): go_to('status_check')
     if st.button("🔐 Officer/ Admin Login"): go_to('login')
@@ -148,9 +144,7 @@ elif st.session_state.page == 'new_form':
     st.markdown('<div class="hindi-heading">Grievance Registration</div>', unsafe_allow_html=True)
     
     if not st.session_state.hrms_verified:
-        # Input (Text Left, Label Left)
         hrms_in = st.text_input("Enter HRMS ID (HRMS आईडी)*", max_chars=6).upper().strip()
-        # Verify Button (Centered, 300px)
         if st.button("🔎 Verify ID"):
             try:
                 df = pd.DataFrame(get_sheet("EMPLOYEE_MAPPING").get_all_records())
@@ -225,15 +219,21 @@ elif st.session_state.page == 'login':
     
     if not st.session_state.super_verified:
         if st.button("👤 Find User"):
-            try:
-                df = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
-                match = df[df['HRMS_ID'] == s_hrms]
-                if not match.empty:
-                    st.session_state.active_super = match.iloc[0].to_dict()
-                    st.session_state.super_verified = True
-                    st.rerun()
-                else: st.error("User not found.")
-            except: st.error("DB Error")
+            if not s_hrms:
+                st.warning("⚠️ Please enter an HRMS ID.")
+            else:
+                # Green Spinner - "Fetching"
+                with st.spinner("Fetching Details..."):
+                    # Small delay to ensure spinner is seen (optional, usually not needed if DB is slow)
+                    try:
+                        df = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
+                        match = df[df['HRMS_ID'] == s_hrms]
+                        if not match.empty:
+                            st.session_state.active_super = match.iloc[0].to_dict()
+                            st.session_state.super_verified = True
+                            st.rerun()
+                        else: st.error("User not found.")
+                    except: st.error("DB Connection Error.")
     else:
         st.success(f"✅ {st.session_state.active_super['NAME']}")
         key = st.text_input("Password", type="password")
@@ -249,74 +249,81 @@ elif st.session_state.page == 'login':
         st.session_state.super_verified = False
         go_to('landing')
 
-# --- PAGE 5: ADMIN DASHBOARD (WIDE) ---
+# --- PAGE 5: ADMIN DASHBOARD ---
 elif st.session_state.page == 'admin_dashboard':
     st.markdown('<div class="hindi-heading" style="font-size:35px;">Admin Dashboard</div>', unsafe_allow_html=True)
-    st.markdown(f'<div style="text-align:center; color:#fca311; font-weight:bold; margin-bottom:20px;">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
+    
+    # BIGGER WELCOME MESSAGE
+    st.markdown(f'<div class="welcome-msg">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
 
     ws_g = get_sheet("GRIEVANCE")
     df = pd.DataFrame(ws_g.get_all_records())
 
-    # Oversight
-    st.markdown(f"""
-    <div class="card-box">
-        <div class="card" style="background:white;">TOTAL<br>{len(df)}</div>
-        <div class="card" style="background:#3498db; color:white;">NEW<br>{len(df[df['STATUS']=='NEW'])}</div>
-        <div class="card" style="background:#f1c40f;">PROCESS<br>{len(df[df['STATUS']=='UNDER PROCESS'])}</div>
-        <div class="card" style="background:#2ecc71; color:white;">RESOLVED<br>{len(df[df['STATUS']=='RESOLVED'])}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    # --- CLICKABLE OVERSIGHT BUTTONS ---
+    # Calculating counts
+    count_total = len(df)
+    count_new = len(df[df['STATUS']=='NEW'])
+    count_process = len(df[df['STATUS']=='UNDER PROCESS'])
+    count_resolved = len(df[df['STATUS']=='RESOLVED'])
 
-    # Filters
-    c1, c2, c3, c4 = st.columns([2, 2, 2, 2])
-    with c1: f_hrms = st.text_input("Filter HRMS").upper()
-    with c2: f_name = st.text_input("Filter Name")
-    with c3: f_sec = st.text_input("Filter Section")
-    with c4: 
-        st.write("") 
-        show_new = st.checkbox("Show 'NEW' Only")
+    # Create 4 columns for the filter buttons
+    c1, c2, c3, c4 = st.columns(4)
+    
+    # When clicked, they update the session state filter
+    if c1.button(f"TOTAL ({count_total})"): st.session_state.admin_filter = 'ALL'
+    if c2.button(f"NEW ({count_new})"): st.session_state.admin_filter = 'NEW'
+    if c3.button(f"PROCESS ({count_process})"): st.session_state.admin_filter = 'UNDER PROCESS'
+    if c4.button(f"RESOLVED ({count_resolved})"): st.session_state.admin_filter = 'RESOLVED'
 
+    # Current Filter Indicator
+    st.caption(f"Currently Showing: **{st.session_state.admin_filter}**")
+
+    # Apply Filter Logic
     f_df = df.copy()
-    if f_hrms: f_df = f_df[f_df['HRMS_ID'].str.contains(f_hrms, na=False)]
-    if f_name: f_df = f_df[f_df['EMP_NAME'].str.contains(f_name, case=False, na=False)]
-    if f_sec: f_df = f_df[f_df['SECTION'].str.contains(f_sec, case=False, na=False)]
-    if show_new: f_df = f_df[f_df['STATUS'] == 'NEW']
+    if st.session_state.admin_filter != 'ALL':
+        f_df = f_df[f_df['STATUS'] == st.session_state.admin_filter]
 
-    # Action Table
+    # --- ACTION TABLE ---
     off_df = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
     officers = ["Select Officer"] + [f"{r['NAME']} ({r['RANK']})" for _, r in off_df[off_df['ROLE'].isin(['OFFICER', 'BOTH'])].iterrows()]
 
     st.markdown("---")
-    for i, row in f_df.iterrows():
-        ac1, ac2, ac3 = st.columns([1.5, 5, 2.5])
-        
-        with ac1:
-            color = "#3498db" if row['STATUS'] == "NEW" else "#f1c40f" if row['STATUS'] == "UNDER PROCESS" else "#2ecc71"
-            st.write(f"**Ref:** {row['REFERENCE_NO']}")
-            st.markdown(f"<span style='color:{color}; font-weight:900;'>{row['STATUS']}</span>", unsafe_allow_html=True)
+    
+    if f_df.empty:
+        st.info("No records found for this category.")
+    else:
+        for i, row in f_df.iterrows():
+            ac1, ac2, ac3 = st.columns([1.5, 5, 2.5])
             
-        with ac2:
-            st.write(f"**{row['EMP_NAME']}** | {row['SECTION']}")
-            st.caption(f"{row['GRIEVANCE_TEXT']}")
-            
-        with ac3:
-            if row['STATUS'] == "NEW":
-                sel = st.selectbox("Assign", officers, key=f"adm_{i}")
-                if sel != "Select Officer":
-                    now = datetime.now().strftime("%d-%m-%Y %H:%M")
-                    try:
-                        cell = ws_g.find(str(row['REFERENCE_NO']))
-                        ws_g.update_cell(cell.row, 11, "UNDER PROCESS")
-                        ws_g.update_cell(cell.row, 12, f"Marked to: {sel} at {now}")
-                        st.success("Assigned!")
-                        st.rerun()
-                    except: st.error("Update Failed")
-            else:
-                st.info(f"📍 {row['MARKED_OFFICER']}")
-        st.markdown("---")
+            with ac1:
+                color = "#3498db" if row['STATUS'] == "NEW" else "#f1c40f" if row['STATUS'] == "UNDER PROCESS" else "#2ecc71"
+                st.write(f"**Ref:** {row['REFERENCE_NO']}")
+                st.markdown(f"<span style='color:{color}; font-weight:900;'>{row['STATUS']}</span>", unsafe_allow_html=True)
+                
+            with ac2:
+                st.write(f"**{row['EMP_NAME']}** | {row['SECTION']}")
+                st.caption(f"{row['GRIEVANCE_TEXT']}")
+                
+            with ac3:
+                if row['STATUS'] == "NEW":
+                    sel = st.selectbox("Assign", officers, key=f"adm_{i}")
+                    if sel != "Select Officer":
+                        now = datetime.now().strftime("%d-%m-%Y %H:%M")
+                        try:
+                            cell = ws_g.find(str(row['REFERENCE_NO']))
+                            ws_g.update_cell(cell.row, 11, "UNDER PROCESS")
+                            ws_g.update_cell(cell.row, 12, f"Marked to: {sel} at {now}")
+                            st.success("Assigned!")
+                            time.sleep(1) # Small delay for visual feedback
+                            st.rerun()
+                        except: st.error("Update Failed")
+                else:
+                    st.info(f"📍 {row['MARKED_OFFICER']}")
+            st.markdown("---")
 
     if st.button("🚪 Logout"):
         st.session_state.super_verified = False
+        st.session_state.admin_filter = 'ALL' # Reset filter on logout
         go_to('landing')
 
 elif st.session_state.page == 'role_selection':
@@ -326,4 +333,7 @@ elif st.session_state.page == 'role_selection':
 
 elif st.session_state.page == 'officer_dashboard':
     st.markdown('<div class="hindi-heading">Officer Dashboard</div>', unsafe_allow_html=True)
+    # UPDATED WELCOME MSG HERE TOO
+    st.markdown(f'<div class="welcome-msg">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
+    
     if st.button("🚪 Logout"): go_to('landing')
