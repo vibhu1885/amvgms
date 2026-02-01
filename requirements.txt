@@ -1,4 +1,9 @@
-st-gsheets-connection
+streamlit
 pandas
-gspread 
-google-auth
+st-gsheets-connection
+gspread
+gspread-dataframe
+gspread-formatting
+sql_metadata
+validators
+duckdb
