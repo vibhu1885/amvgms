@@ -9,7 +9,7 @@ import gspread
 # 0. SETUP
 # ==========================================
 LOGO_PATH = "assets/office_logo.png"
-LOGO_WIDTH = 110 # Slightly smaller to fit side-by-side
+LOGO_WIDTH = 130
 APP_BG_COLOR = "#131419"
 
 # Initialize State
@@ -30,20 +30,20 @@ def get_sheet(sheet_name):
     return client.open("Grievance_DB").worksheet(sheet_name)
 
 # ==========================================
-# 1. LAYOUT CONFIGURATION
+# 1. LAYOUT & CSS CONFIGURATION
 # ==========================================
 st.set_page_config(page_title="GMS Alambagh", layout="wide")
 
-# Determine Width: 1200px for Admin, 480px for Mobile Views
+# Container Width: 1200px for Admin, 480px for everything else
 container_max_width = "1200px" if st.session_state.page == 'admin_dashboard' else "480px"
 
 st.markdown(f"""
 <style>
-    /* HIDE HEADER/FOOTER */
+    /* HIDE DEFAULT HEADER/FOOTER */
     header, footer, [data-testid="stHeader"] {{ visibility: hidden; height: 0; }}
     .stApp {{ background-color: {APP_BG_COLOR}; }}
 
-    /* MAIN CONTAINER: THE 480px LOCK */
+    /* 1. MAIN CONTAINER LOCK */
     .block-container {{
         max-width: {container_max_width} !important;
         padding-top: 2rem !important;
@@ -52,23 +52,21 @@ st.markdown(f"""
         margin: 0 auto !important;
     }}
 
-    /* HEADER ALIGNMENT (For Landing Page Side-by-Side) */
-    .header-text {{
+    /* 2. LOGO ALIGNMENT (Centered) */
+    [data-testid="stImage"] {{
         display: flex;
-        flex-direction: column;
         justify-content: center;
-        height: 100%;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 15px;
     }}
+    [data-testid="stImage"] img {{ margin: 0 auto; }}
 
-    /* HEADINGS */
-    .hindi-heading {{ text-align: left; color: white; font-weight: 900; font-size: 18px; line-height: 1.2; margin-bottom: 5px; }}
-    .english-heading {{ text-align: left; color: #fca311; font-weight: bold; font-size: 14px; margin-bottom: 0px; }}
-    
-    /* CENTERED HEADINGS (For other pages) */
-    .centered-hindi {{ text-align: center; color: white; font-weight: 900; font-size: 22px; margin-bottom: 5px; }}
-    .centered-english {{ text-align: center; color: white; font-weight: bold; font-size: 18px; margin-bottom: 30px; }}
+    /* 3. HEADING ALIGNMENT (Centered) */
+    .hindi-heading {{ text-align: center; color: white; font-weight: 900; font-size: 22px; margin-bottom: 5px; width: 100%; }}
+    .english-heading {{ text-align: center; color: white; font-weight: bold; font-size: 18px; margin-bottom: 30px; width: 100%; }}
 
-    /* INPUTS: LEFT ALIGNED TEXT, WHITE LABELS */
+    /* 4. INPUTS (Labels Left, Text Left) */
     .stTextInput label, .stSelectbox label, .stTextArea label {{
         color: white !important;
         font-weight: bold !important;
@@ -77,8 +75,8 @@ st.markdown(f"""
         width: 100%;
     }}
     .stTextInput, .stSelectbox, .stTextArea {{ width: 100% !important; }}
-
-    /* BUTTONS: STRICT 300PX WIDTH & CENTERED */
+    
+    /* 5. BUTTONS (Strict 300px, Centered) */
     .stButton {{
         display: flex !important;
         justify-content: center !important;
@@ -90,13 +88,13 @@ st.markdown(f"""
         border: 4px solid #fca311 !important;
         border-radius: 20px !important;
         
-        /* STRICT SIZE LOCK */
+        /* STRICT 300PX WIDTH */
         width: 300px !important; 
         height: 70px !important;
         
         font-weight: 900 !important;
         font-size: 18px !important;
-        margin: 10px auto !important; /* Physically centers the 300px button */
+        margin: 10px auto !important; /* Physically centers the button */
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }}
     div.stButton > button:hover {{
@@ -105,18 +103,9 @@ st.markdown(f"""
     }}
     div.stButton > button p {{ font-weight: 900 !important; margin: 0 !important; }}
 
-    /* ADMIN CARDS */
+    /* 6. ADMIN CARDS */
     .card-box {{ display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }}
-    .card {{ 
-        background: white; 
-        padding: 15px; 
-        border-radius: 10px; 
-        text-align: center; 
-        font-weight: 900; 
-        color: #131419; 
-        min-width: 140px; 
-        flex: 1; 
-    }}
+    .card {{ background: white; padding: 15px; border-radius: 10px; text-align: center; font-weight: 900; color: #131419; min-width: 140px; flex: 1; }}
 
 </style>
 """, unsafe_allow_html=True)
@@ -139,44 +128,29 @@ def generate_ref_no(hrms_id, df_grievance):
 # 3. PAGE LOGIC
 # ==========================================
 
-# --- PAGE 1: LANDING (Horizontal Layout) ---
+# --- PAGE 1: LANDING ---
 if st.session_state.page == 'landing':
+    # 1. Logo (Centered)
+    if os.path.exists(LOGO_PATH): 
+        st.image(LOGO_PATH, width=LOGO_WIDTH)
     
-    # Create 2 Columns: Left for Logo, Right for Text
-    # col_logo is narrow, col_text takes rest
-    col_logo, col_text = st.columns([1, 2.5])
+    # 2. Headings (Centered, Below Logo)
+    st.markdown('<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
+    st.markdown('<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
     
-    with col_logo:
-        if os.path.exists(LOGO_PATH): 
-            st.image(LOGO_PATH, width=LOGO_WIDTH)
-            
-    with col_text:
-        # Using custom class to vertically center text if needed
-        st.markdown(
-            """
-            <div class="header-text">
-                <div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>
-                <div class="english-heading">Grievance Management System</div>
-            </div>
-            """, 
-            unsafe_allow_html=True
-        )
-    
-    st.write("") # Spacer
-    st.write("---") # Visual separator
-    st.write("") 
-
-    # Buttons (Will be exactly 300px and centered due to CSS)
+    # 3. Buttons (Centered, 300px)
     if st.button("📝 नया Grievance दर्ज करें"): go_to('new_form')
     if st.button("🔍 ग्रीवांस की वर्तमान स्थिति जानें"): go_to('status_check')
     if st.button("🔐 Officer/ Admin Login"): go_to('login')
 
 # --- PAGE 2: REGISTRATION ---
 elif st.session_state.page == 'new_form':
-    st.markdown('<div class="centered-hindi">Grievance Registration</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hindi-heading">Grievance Registration</div>', unsafe_allow_html=True)
     
     if not st.session_state.hrms_verified:
+        # Input (Text Left, Label Left)
         hrms_in = st.text_input("Enter HRMS ID (HRMS आईडी)*", max_chars=6).upper().strip()
+        # Verify Button (Centered, 300px)
         if st.button("🔎 Verify ID"):
             try:
                 df = pd.DataFrame(get_sheet("EMPLOYEE_MAPPING").get_all_records())
@@ -226,7 +200,7 @@ elif st.session_state.page == 'new_form':
 
 # --- PAGE 3: STATUS CHECK ---
 elif st.session_state.page == 'status_check':
-    st.markdown('<div class="centered-hindi">Grievance Status</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hindi-heading">Grievance Status</div>', unsafe_allow_html=True)
     ref_in = st.text_input("Enter Reference Number").strip()
     
     if st.button("🔍 Check Status"):
@@ -244,7 +218,7 @@ elif st.session_state.page == 'status_check':
 
 # --- PAGE 4: LOGIN ---
 elif st.session_state.page == 'login':
-    st.markdown('<div class="centered-hindi">Superuser Login</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hindi-heading">Superuser Login</div>', unsafe_allow_html=True)
     
     locked = st.session_state.super_verified
     s_hrms = st.text_input("Enter HRMS ID", value=st.session_state.active_super.get('HRMS_ID', ""), disabled=locked).upper().strip()
@@ -277,7 +251,7 @@ elif st.session_state.page == 'login':
 
 # --- PAGE 5: ADMIN DASHBOARD (WIDE) ---
 elif st.session_state.page == 'admin_dashboard':
-    st.markdown('<div class="centered-hindi" style="font-size:35px;">Admin Dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hindi-heading" style="font-size:35px;">Admin Dashboard</div>', unsafe_allow_html=True)
     st.markdown(f'<div style="text-align:center; color:#fca311; font-weight:bold; margin-bottom:20px;">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
 
     ws_g = get_sheet("GRIEVANCE")
@@ -344,3 +318,12 @@ elif st.session_state.page == 'admin_dashboard':
     if st.button("🚪 Logout"):
         st.session_state.super_verified = False
         go_to('landing')
+
+elif st.session_state.page == 'role_selection':
+    st.markdown('<div class="hindi-heading">Select Dashboard</div>', unsafe_allow_html=True)
+    if st.button("🛠️ Admin Dashboard"): go_to('admin_dashboard')
+    if st.button("📋 Officer Dashboard"): go_to('officer_dashboard')
+
+elif st.session_state.page == 'officer_dashboard':
+    st.markdown('<div class="hindi-heading">Officer Dashboard</div>', unsafe_allow_html=True)
+    if st.button("🚪 Logout"): go_to('landing')
