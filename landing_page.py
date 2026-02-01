@@ -322,28 +322,31 @@ elif st.session_state.page == 'admin_dashboard':
                 st.markdown(f"<span class='detail-label'>Description:</span>", unsafe_allow_html=True)
                 st.info(f"{row['GRIEVANCE_TEXT']}")
 
-                # ACTION / DISPLAY LOGIC
+                # ACTION LOGIC
                 if row['STATUS'] == "NEW":
                     act_col, _ = st.columns([4, 4])
                     sel = act_col.selectbox("Assign To:", officers, key=f"adm_{i}")
                     if sel != "Select Officer":
                         now = datetime.now().strftime("%d-%m-%Y %H:%M")
                         try:
-                            # 1. Update Sheet: Col 12 = Name Only, Col 13 = Time
+                            # SAVE COMBINED STRING: Name + Time in Column 12
+                            # We leave Column 13 empty for now (reserved for officer's own remark)
+                            combined_text = f"{sel} at {now}"
+                            
                             cell = ws_g.find(str(row['REFERENCE_NO']))
                             ws_g.update_cell(cell.row, 11, "UNDER PROCESS")
-                            ws_g.update_cell(cell.row, 12, sel) # Save "Name (Rank)" only
-                            ws_g.update_cell(cell.row, 13, f"Assigned on {now}") # Save Time separately
+                            ws_g.update_cell(cell.row, 12, combined_text)
+                            
                             st.success("Assigned!")
                             time.sleep(0.5)
                             st.rerun()
                         except: st.error("Update Failed")
                 else:
-                    # Display the Separated Data
+                    # CLEAN DISPLAY
                     st.markdown(f"""
-                    <div style="background-color: #2c2e3a; padding: 10px; border-radius: 8px;">
-                        <span style="color: #fca311; font-weight: bold;">Assigned To:</span> <span style="color: white;">{row['MARKED_OFFICER']}</span><br>
-                        <span style="color: #fca311; font-weight: bold;">Time:</span> <span style="color: #aaa;">{row['OFFICER_REMARK']}</span>
+                    <div style="background-color: #2c2e3a; padding: 10px; border-radius: 8px; border: 1px solid #444;">
+                        <span style="color: #fca311; font-weight: bold;">Assigned To:</span> 
+                        <span style="color: white; font-weight: bold;">{row['MARKED_OFFICER']}</span>
                     </div>
                     """, unsafe_allow_html=True)
                 
