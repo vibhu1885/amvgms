@@ -194,4 +194,70 @@ elif st.session_state.page == 'new_form':
             dd_df = pd.DataFrame(get_sheet("DROPDOWN_MAPPINGS").get_all_records())
             designations = ["Select"] + [x for x in dd_df['DESIGNATION_LIST'].dropna().unique().tolist() if x]
             trades = ["Select"] + [x for x in dd_df['TRADE_LIST'].dropna().unique().tolist() if x]
-            g_types = ["Select"] + [x for x in dd_
+            g_types = ["Select"] + [x for x in dd_df['GRIEVANCE_TYPE_LIST'].dropna().unique().tolist() if x]
+        except:
+            designations = trades = g_types = ["Select"]
+
+        emp_name = st.text_input("Employee Name (कर्मचारी का नाम)*", value=st.session_state.found_emp_name, disabled=True)
+        emp_no = st.text_input("Employee Number (कर्मचारी संख्या)*")
+        if not emp_no and 'tried_submit' in st.session_state: st.markdown('<p class="err-msg">⚠️ Required</p>', unsafe_allow_html=True)
+
+        emp_desig = st.selectbox("Employee Designation (कर्मचारी का पद)*", designations)
+        if emp_desig == "Select" and 'tried_submit' in st.session_state: st.markdown('<p class="err-msg">⚠️ Select Designation</p>', unsafe_allow_html=True)
+
+        emp_trade = st.selectbox("Employee Trade (कर्मचारी का ट्रेड)*", trades)
+        if emp_trade == "Select" and 'tried_submit' in st.session_state: st.markdown('<p class="err-msg">⚠️ Select Trade</p>', unsafe_allow_html=True)
+
+        emp_sec = st.text_input("Employee Section (कर्मचारी का कार्यस्थल)*")
+        if not emp_sec and 'tried_submit' in st.session_state: st.markdown('<p class="err-msg">⚠️ Section Required</p>', unsafe_allow_html=True)
+
+        g_type = st.selectbox("Grievance Type (समस्या का प्रकार)*", g_types)
+        if g_type == "Select" and 'tried_submit' in st.session_state: st.markdown('<p class="err-msg">⚠️ Select Type</p>', unsafe_allow_html=True)
+
+        g_text = st.text_area("Brief of Grievance (समस्या का विवरण)*", max_chars=1000)
+        if not g_text and 'tried_submit' in st.session_state: st.markdown('<p class="err-msg">⚠️ Details Required</p>', unsafe_allow_html=True)
+
+        if st.button("Grievance जमा करें।"):
+            st.session_state.tried_submit = True
+            if not any(x in [None, "", "Select"] for x in [emp_no, emp_desig, emp_trade, emp_sec, g_type, g_text]):
+                try:
+                    grievance_ws = get_sheet("GRIEVANCE") 
+                    df_grievance = pd.DataFrame(grievance_ws.get_all_records())
+                    now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+                    ref_no = generate_ref_no(st.session_state.active_hrms, df_grievance)
+                    
+                    new_row = [ref_no, now, st.session_state.active_hrms, st.session_state.found_emp_name, 
+                               emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "NEW", "N/A", "N/A"]
+                    
+                    grievance_ws.append_row(new_row)
+                    st.success(f"Registered! Your Ref No is: {ref_no}")
+                    st.balloons()
+                    st.session_state.hrms_verified = False
+                    if 'tried_submit' in st.session_state: del st.session_state.tried_submit
+                except Exception as e: st.error(f"Critical Error: {e}")
+            else: st.rerun()
+
+    if st.button("⬅️ Back to Home"):
+        st.session_state.hrms_verified = False
+        if 'tried_submit' in st.session_state: del st.session_state.tried_submit
+        go_to('landing')
+
+elif st.session_state.page == 'status_check':
+    st.markdown('<div class="hindi-heading">Grievance Status</div>', unsafe_allow_html=True)
+    ref_input = st.text_input("Enter Reference Number*", placeholder="e.g. 20260201ABCDEF001").strip()
+    if st.button("🔍 Check Status"):
+        if ref_input:
+            try:
+                df = pd.DataFrame(get_sheet("GRIEVANCE").get_all_records())
+                match = df[df['REFERENCE_NO'].astype(str) == ref_input]
+                if not match.empty:
+                    res = match.iloc[0]
+                    st.markdown(f"### Status: {res['STATUS']}")
+                    st.info(f"**Remarks:** {res['OFFICER_REMARK']}")
+                else: st.error("No record found.")
+            except Exception as e: st.error(f"Error: {e}")
+    if st.button("⬅️ Back to Home"): go_to('landing')
+
+elif st.session_state.page == 'login':
+    st.markdown('<div class="hindi-heading">Officer Login</div>', unsafe_allow_html=True)
+    if st.button("⬅️ Back to Home"): go_to('landing')
