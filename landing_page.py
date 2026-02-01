@@ -22,7 +22,7 @@ BTN_BORDER_COLOR = "#fca311"
 BTN_BORDER_WIDTH = "2px"
 BTN_ROUNDNESS = "25px"
 BTN_HOVER_COLOR = "#a7c957"
-BTN_TEXT_SIZE = "28px"
+BTN_TEXT_SIZE = "32px"
 BTN_FONT_WEIGHT = "Extra-Bold"
 
 # 4. Label & Text Controls
