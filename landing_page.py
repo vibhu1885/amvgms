@@ -105,7 +105,7 @@ custom_css = f"""
 
     .hindi-heading {{
         color: {HEADING_COLOR};
-        font-size: {HEADING_FONT_SIZE_HI};
+        font-size: 20px;
         font-weight: bold;
         line-height: 1.2;
         margin-top: 6px;
