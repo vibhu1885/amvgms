@@ -332,6 +332,7 @@ elif st.session_state.page == 'status_check':
 elif st.session_state.page == 'login':
     st.markdown('<div class="hindi-heading">Dashboard Login</div>', unsafe_allow_html=True)
     st.markdown('<div class="hindi-heading">Officer/ Admin</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hindi-heading"></div>', unsafe_allow_html=True)
     
     locked = st.session_state.super_verified
     s_hrms = st.text_input("Enter HRMS ID", value=st.session_state.active_super.get('HRMS_ID', ""), disabled=locked).upper().strip()
