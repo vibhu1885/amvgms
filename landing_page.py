@@ -456,7 +456,7 @@ elif st.session_state.page == 'admin_dashboard':
 
 # --- PAGE 6: ROLE SELECTION (For Users with 'BOTH' Role) ---
 elif st.session_state.page == 'role_selection':
-    st.markdown('<div class="hindi-heading">Select Dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hindi-heading">Dashboard Selection</div>', unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True) # Spacer
 
     if st.button("🛠️ Admin Dashboard"): go_to('admin_dashboard')
