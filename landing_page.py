@@ -22,7 +22,6 @@ BTN_ROUNDNESS = "10px"
 BTN_HOVER_COLOR = "#4F8BF9"
 BTN_TEXT_SIZE = "16px"
 BTN_FONT_WEIGHT = "bold"
-BTN_ALIGNMENT = "center"
 
 # 4. Label & Text Controls
 LABEL_FONT_SIZE = "18px"
@@ -47,37 +46,26 @@ custom_css = f"""
         background-color: {APP_BG_COLOR};
     }}
 
-    /* 3. Main Container: Horizontal Center & Top Align */
+    /* 3. Main Container: Fixed width & Horizontal Center */
     .block-container {{
         max-width: 480px !important;
-        padding: 2rem 1rem !important; /* Adjust top padding here */
+        padding: 2rem 1rem !important;
         margin: 0 auto !important;
-        display: block !important;
     }}
 
-    /* 4. Global Label Styling */
-    label, p, .stMarkdown {{
-        color: {LABEL_COLOR} !important;
-        font-size: {LABEL_FONT_SIZE};
-        text-align: center !important;
+    /* 4. Center the Logo Container */
+    [data-testid="stImage"] {{
+        display: flex !important;
+        justify-content: center !important;
+        margin-left: auto;
+        margin-right: auto;
+        width: 100%;
     }}
 
-    /* 5. Heading Styles */
-    .hindi-heading {{
-        color: {HEADING_COLOR};
-        font-size: {HEADING_FONT_SIZE_HI};
-        font-weight: bold;
-        text-align: center;
-        line-height: 1.3;
-        margin: 10px 0 5px 0;
-    }}
-    
-    .english-heading {{
-        color: {HEADING_COLOR};
-        font-size: {HEADING_FONT_SIZE_EN};
-        font-weight: bold;
-        text-align: center;
-        margin-bottom: 30px;
+    /* 5. Center the Button Containers */
+    .stButton {{
+        display: flex !important;
+        justify-content: center !important;
     }}
 
     /* 6. BUTTON MASTER STYLING */
@@ -86,11 +74,12 @@ custom_css = f"""
         color: {BTN_TEXT_COLOR} !important;
         border: {BTN_BORDER_WIDTH} solid {BTN_BORDER_COLOR} !important;
         border-radius: {BTN_ROUNDNESS} !important;
-        width: 100% !important;
+        width: 100% !important; /* Forces button to fill the 480px width */
+        max-width: 400px; /* Adjust this if you want buttons slightly narrower than the screen */
         padding: 14px 0px !important;
         font-size: {BTN_TEXT_SIZE} !important;
         font-weight: {BTN_FONT_WEIGHT} !important;
-        margin-bottom: 12px;
+        margin: 10px auto !important;
         transition: 0.3s ease;
     }}
 
@@ -99,16 +88,32 @@ custom_css = f"""
         border-color: {BTN_TEXT_COLOR} !important;
     }}
 
-    /* 7. Center Logo specifically */
-    [data-testid="stImage"] {{
-        display: flex;
-        justify-content: center;
-        margin-bottom: 5px;
+    /* 7. Center Headings and Text */
+    .hindi-heading, .english-heading, .stMarkdown, p, label {{
+        text-align: center !important;
+        color: {LABEL_COLOR} !important;
     }}
 
-    /* Center text inputs and areas */
-    [data-testid="stTextInput"], [data-testid="stTextArea"] {{
-        text-align: center;
+    .hindi-heading {{
+        color: {HEADING_COLOR};
+        font-size: {HEADING_FONT_SIZE_HI};
+        font-weight: bold;
+        line-height: 1.3;
+        margin-top: 15px;
+    }}
+    
+    .english-heading {{
+        color: {HEADING_COLOR};
+        font-size: {HEADING_FONT_SIZE_EN};
+        font-weight: bold;
+        margin-bottom: 30px;
+    }}
+
+    /* Center input labels and fields */
+    [data-testid="stVerticalBlock"] > div {{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }}
 </style>
 """
@@ -129,15 +134,13 @@ def go_to(page_name):
 
 # --- PAGE 1: LANDING ---
 if st.session_state.page == 'landing':
-    # Logo at the very top
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH, width=LOGO_WIDTH)
     
-    # Headings
     st.markdown(f'<div class="hindi-heading">सवारी डिब्बा कारखाना,<br>आलमबाग, लखनऊ.</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
     
-    # Buttons
+    # Vertically stacked but horizontally centered
     if st.button("नया Grievance दर्ज करें"):
         go_to('new_form')
 
