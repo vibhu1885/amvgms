@@ -199,7 +199,7 @@ elif st.session_state.page == 'new_form':
         g_type = st.selectbox("Grievance Type (समस्या का प्रकार)*", g_types)
         g_text = st.text_area("Brief of Grievance (समस्या का विवरण)*", max_chars=1000)
 
-        if st.button("Grievance जमा करें।"):
+        if st.button("Grievance जमा करें"):
             st.session_state.tried_submit = True
             if not any(x in [None, "", "Select"] for x in [emp_no, emp_desig, emp_trade, emp_sec, g_type, g_text]):
                 try:
