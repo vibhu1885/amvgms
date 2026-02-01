@@ -126,14 +126,14 @@ st.markdown(f"""
         font-family: sans-serif;
     }}
     .g-ref {{ font-size: 16px; font-weight: 900; color: #065535; margin-bottom: 10px; border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 8px; }}
-    .g-label {{ font-size: 13px; font-weight: bold; color: #613927; text-transform: uppercase; margin-top: 12px; letter-spacing: 0.5px; }}
+    .g-label {{ font-size: 13px; font-weight: bold; color: #34240c; text-transform: uppercase; margin-top: 12px; letter-spacing: 0.5px; }}
     .g-value {{ font-size: 16px; color: #000; font-weight: 600; line-height: 1.4; }}
     
     /* Action Badges */
     .badge-base {{ display: inline-block; padding: 8px 14px; border-radius: 20px; font-size: 15px; font-weight: 900; margin-top: 5px; border: 1px solid rgba(0,0,0,0.1); }}
-    .badge-new {{ background-color: white; color: #1976d2; }}
-    .badge-process {{ background-color: white; color: #856404; }}
-    .badge-resolved {{ background-color: white; color: #155724; }}
+    .badge-new {{ background-color: #076db5; color: white; }}
+    .badge-process {{ background-color: #ffd700; color: white; }}
+    .badge-resolved {{ background-color: #00a436; color: white; }}
     
     .remark-box {{
         background-color: rgba(255,255,255,0.6);
