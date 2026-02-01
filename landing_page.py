@@ -183,6 +183,7 @@ if st.session_state.page == 'landing':
 # --- PAGE 2: REGISTRATION ---
 elif st.session_state.page == 'new_form':
     st.markdown('<div class="hindi-heading">Grievance Registration\n</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hindi-heading"></div>', unsafe_allow_html=True)
     
     if not st.session_state.hrms_verified:
         hrms_in = st.text_input("Enter your HRMS ID (अपनी HRMS आईडी दर्ज करें)*", max_chars=6).upper().strip()
