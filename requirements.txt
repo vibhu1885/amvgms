@@ -7,3 +7,4 @@ gspread-formatting
 sql_metadata
 validators
 duckdb
+pytz
