@@ -350,7 +350,7 @@ elif st.session_state.page == 'login':
                             st.session_state.super_verified = True
                             st.rerun()
                         else: st.error("❌ User not found.")
-                        except: st.error("Connection Error.")
+                    except: st.error("Connection Error.")
                         
     else:
         st.success(f"✅ {st.session_state.active_super['NAME']}")
