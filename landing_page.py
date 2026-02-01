@@ -18,7 +18,7 @@ if 'page' not in st.session_state: st.session_state.page = 'landing'
 if 'hrms_verified' not in st.session_state: st.session_state.hrms_verified = False
 if 'super_verified' not in st.session_state: st.session_state.super_verified = False
 if 'active_super' not in st.session_state: st.session_state.active_super = {}
-if 'admin_filter' not in st.session_state: st.session_state.admin_filter = 'ALL' # Default filter
+if 'admin_filter' not in st.session_state: st.session_state.admin_filter = 'ALL'
 
 # DATABASE CONNECT
 def get_sheet(sheet_name):
@@ -36,7 +36,7 @@ def get_sheet(sheet_name):
 # ==========================================
 st.set_page_config(page_title="GMS Alambagh", layout="wide")
 
-# Container Width: 1200px for Admin, 480px for everything else
+# Determine Container Width
 container_max_width = "1200px" if st.session_state.page == 'admin_dashboard' else "480px"
 
 st.markdown(f"""
@@ -64,9 +64,10 @@ st.markdown(f"""
     }}
     [data-testid="stImage"] img {{ margin: 0 auto; }}
 
-    /* 3. HEADING ALIGNMENT (Centered) */
+    /* 3. HEADING ALIGNMENT */
     .hindi-heading {{ text-align: center; color: white; font-weight: 900; font-size: 22px; margin-bottom: 5px; width: 100%; }}
     .english-heading {{ text-align: center; color: white; font-weight: bold; font-size: 18px; margin-bottom: 30px; width: 100%; }}
+    .welcome-msg {{ text-align: center; color: #fca311; font-weight: 900; font-size: 24px; margin-bottom: 25px; width: 100%; }}
 
     /* 4. INPUTS (Labels Left, Text Left) */
     .stTextInput label, .stSelectbox label, .stTextArea label {{
@@ -77,8 +78,8 @@ st.markdown(f"""
         width: 100%;
     }}
     .stTextInput, .stSelectbox, .stTextArea {{ width: 100% !important; }}
-    
-    /* 5. BUTTONS (Strict 300px, Centered) */
+
+    /* 5. GENERAL BUTTONS (Strict 300px, Centered) */
     .stButton {{
         display: flex !important;
         justify-content: center !important;
@@ -89,24 +90,49 @@ st.markdown(f"""
         color: #131419 !important;
         border: 4px solid #fca311 !important;
         border-radius: 20px !important;
-        
-        /* STRICT 300PX WIDTH */
         width: 300px !important; 
         height: 70px !important;
-        
         font-weight: 900 !important;
         font-size: 18px !important;
-        margin: 10px auto !important; /* Physically centers the button */
+        margin: 10px auto !important;
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }}
     div.stButton > button:hover {{
         background-color: #a7c957 !important;
         transform: scale(1.02);
     }}
-    div.stButton > button p {{ font-weight: 900 !important; margin: 0 !important; }}
-
-    /* 6. ADMIN SPECIFIC STYLES */
-    .welcome-msg {{ text-align: center; color: #fca311; font-weight: 900; font-size: 26px; margin-bottom: 25px; width: 100%; }}
+    
+    /* 6. ADMIN COLOR-CODED BUTTONS (Targeting by Text Content) */
+    /* NEW -> Blue */
+    div.stButton > button:has(p:contains("NEW")) {{
+        background-color: #3498db !important;
+        color: white !important;
+        border-color: #2980b9 !important;
+        width: 100% !important; /* Flexible width for filter bar */
+        min-width: 100px !important;
+    }}
+    /* PROCESS -> Yellow */
+    div.stButton > button:has(p:contains("PROCESS")) {{
+        background-color: #f1c40f !important;
+        color: #131419 !important;
+        border-color: #f39c12 !important;
+        width: 100% !important;
+        min-width: 100px !important;
+    }}
+    /* RESOLVED -> Green */
+    div.stButton > button:has(p:contains("RESOLVED")) {{
+        background-color: #2ecc71 !important;
+        color: white !important;
+        border-color: #27ae60 !important;
+        width: 100% !important;
+        min-width: 100px !important;
+    }}
+    /* TOTAL -> White */
+    div.stButton > button:has(p:contains("TOTAL")) {{
+        background-color: white !important;
+        width: 100% !important;
+        min-width: 100px !important;
+    }}
 
 </style>
 """, unsafe_allow_html=True)
@@ -146,16 +172,19 @@ elif st.session_state.page == 'new_form':
     if not st.session_state.hrms_verified:
         hrms_in = st.text_input("Enter HRMS ID (HRMS आईडी)*", max_chars=6).upper().strip()
         if st.button("🔎 Verify ID"):
-            try:
-                df = pd.DataFrame(get_sheet("EMPLOYEE_MAPPING").get_all_records())
-                match = df[df['HRMS_ID'] == hrms_in]
-                if not match.empty:
-                    st.session_state.found_emp_name = match.iloc[0]['EMPLOYEE_NAME']
-                    st.session_state.hrms_verified = True
-                    st.session_state.active_hrms = hrms_in
-                    st.rerun()
-                else: st.error("❌ HRMS ID not found.")
-            except Exception as e: st.error(f"Error: {e}")
+            if not hrms_in:
+                 st.warning("⚠️ Please enter HRMS ID.")
+            else:
+                try:
+                    df = pd.DataFrame(get_sheet("EMPLOYEE_MAPPING").get_all_records())
+                    match = df[df['HRMS_ID'] == hrms_in]
+                    if not match.empty:
+                        st.session_state.found_emp_name = match.iloc[0]['EMPLOYEE_NAME']
+                        st.session_state.hrms_verified = True
+                        st.session_state.active_hrms = hrms_in
+                        st.rerun()
+                    else: st.error("❌ HRMS ID not found.")
+                except Exception as e: st.error(f"Error: {e}")
     else:
         st.success(f"✅ Verified: {st.session_state.found_emp_name}")
         
@@ -198,19 +227,22 @@ elif st.session_state.page == 'status_check':
     ref_in = st.text_input("Enter Reference Number").strip()
     
     if st.button("🔍 Check Status"):
-        try:
-            df = pd.DataFrame(get_sheet("GRIEVANCE").get_all_records())
-            match = df[df['REFERENCE_NO'].astype(str) == ref_in]
-            if not match.empty:
-                res = match.iloc[0]
-                st.info(f"**Status:** {res['STATUS']}")
-                st.write(f"**Remark:** {res['OFFICER_REMARK']}")
-            else: st.error("❌ Not Found")
-        except: st.error("Error fetching data.")
+        if not ref_in:
+            st.warning("⚠️ Enter Reference Number.")
+        else:
+            try:
+                df = pd.DataFrame(get_sheet("GRIEVANCE").get_all_records())
+                match = df[df['REFERENCE_NO'].astype(str) == ref_in]
+                if not match.empty:
+                    res = match.iloc[0]
+                    st.info(f"**Status:** {res['STATUS']}")
+                    st.write(f"**Remark:** {res['OFFICER_REMARK']}")
+                else: st.error("❌ Not Found")
+            except: st.error("Error fetching data.")
     
     if st.button("🏠 Back to Home"): go_to('landing')
 
-# --- PAGE 4: LOGIN ---
+# --- PAGE 4: LOGIN (FIXED) ---
 elif st.session_state.page == 'login':
     st.markdown('<div class="hindi-heading">Superuser Login</div>', unsafe_allow_html=True)
     
@@ -219,12 +251,12 @@ elif st.session_state.page == 'login':
     
     if not st.session_state.super_verified:
         if st.button("👤 Find User"):
+            # STRICT CHECK: Only proceed if input exists
             if not s_hrms:
                 st.warning("⚠️ Please enter an HRMS ID.")
             else:
-                # Green Spinner - "Fetching"
+                # GREEN SPINNER
                 with st.spinner("Fetching Details..."):
-                    # Small delay to ensure spinner is seen (optional, usually not needed if DB is slow)
                     try:
                         df = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
                         match = df[df['HRMS_ID'] == s_hrms]
@@ -232,8 +264,10 @@ elif st.session_state.page == 'login':
                             st.session_state.active_super = match.iloc[0].to_dict()
                             st.session_state.super_verified = True
                             st.rerun()
-                        else: st.error("User not found.")
-                    except: st.error("DB Connection Error.")
+                        else: st.error("❌ User not found.")
+                    except: 
+                        # Suppress weird DB errors and show simple message
+                        st.error("Connection Error. Please try again.")
     else:
         st.success(f"✅ {st.session_state.active_super['NAME']}")
         key = st.text_input("Password", type="password")
@@ -253,32 +287,28 @@ elif st.session_state.page == 'login':
 elif st.session_state.page == 'admin_dashboard':
     st.markdown('<div class="hindi-heading" style="font-size:35px;">Admin Dashboard</div>', unsafe_allow_html=True)
     
-    # BIGGER WELCOME MESSAGE
+    # BIGGER & COLORED WELCOME MESSAGE
     st.markdown(f'<div class="welcome-msg">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
 
     ws_g = get_sheet("GRIEVANCE")
     df = pd.DataFrame(ws_g.get_all_records())
 
-    # --- CLICKABLE OVERSIGHT BUTTONS ---
-    # Calculating counts
+    # --- CLICKABLE COLOR-CODED OVERSIGHT BUTTONS ---
     count_total = len(df)
     count_new = len(df[df['STATUS']=='NEW'])
     count_process = len(df[df['STATUS']=='UNDER PROCESS'])
     count_resolved = len(df[df['STATUS']=='RESOLVED'])
 
-    # Create 4 columns for the filter buttons
     c1, c2, c3, c4 = st.columns(4)
-    
-    # When clicked, they update the session state filter
+    # The CSS defined above handles the colors based on the text string!
     if c1.button(f"TOTAL ({count_total})"): st.session_state.admin_filter = 'ALL'
     if c2.button(f"NEW ({count_new})"): st.session_state.admin_filter = 'NEW'
     if c3.button(f"PROCESS ({count_process})"): st.session_state.admin_filter = 'UNDER PROCESS'
     if c4.button(f"RESOLVED ({count_resolved})"): st.session_state.admin_filter = 'RESOLVED'
 
-    # Current Filter Indicator
-    st.caption(f"Currently Showing: **{st.session_state.admin_filter}**")
+    st.caption(f"Showing: **{st.session_state.admin_filter}**")
 
-    # Apply Filter Logic
+    # Apply Filter
     f_df = df.copy()
     if st.session_state.admin_filter != 'ALL':
         f_df = f_df[f_df['STATUS'] == st.session_state.admin_filter]
@@ -290,7 +320,7 @@ elif st.session_state.page == 'admin_dashboard':
     st.markdown("---")
     
     if f_df.empty:
-        st.info("No records found for this category.")
+        st.info("No records found.")
     else:
         for i, row in f_df.iterrows():
             ac1, ac2, ac3 = st.columns([1.5, 5, 2.5])
@@ -310,11 +340,12 @@ elif st.session_state.page == 'admin_dashboard':
                     if sel != "Select Officer":
                         now = datetime.now().strftime("%d-%m-%Y %H:%M")
                         try:
+                            # Robust Row Finding
                             cell = ws_g.find(str(row['REFERENCE_NO']))
                             ws_g.update_cell(cell.row, 11, "UNDER PROCESS")
                             ws_g.update_cell(cell.row, 12, f"Marked to: {sel} at {now}")
                             st.success("Assigned!")
-                            time.sleep(1) # Small delay for visual feedback
+                            time.sleep(1) 
                             st.rerun()
                         except: st.error("Update Failed")
                 else:
@@ -323,7 +354,7 @@ elif st.session_state.page == 'admin_dashboard':
 
     if st.button("🚪 Logout"):
         st.session_state.super_verified = False
-        st.session_state.admin_filter = 'ALL' # Reset filter on logout
+        st.session_state.admin_filter = 'ALL' 
         go_to('landing')
 
 elif st.session_state.page == 'role_selection':
@@ -333,7 +364,6 @@ elif st.session_state.page == 'role_selection':
 
 elif st.session_state.page == 'officer_dashboard':
     st.markdown('<div class="hindi-heading">Officer Dashboard</div>', unsafe_allow_html=True)
-    # UPDATED WELCOME MSG HERE TOO
     st.markdown(f'<div class="welcome-msg">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
     
     if st.button("🚪 Logout"): go_to('landing')
