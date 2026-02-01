@@ -177,7 +177,7 @@ if st.session_state.page == 'landing':
     st.markdown('<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
     
     if st.button("📝 नया Grievance दर्ज करें"): go_to('new_form')
-    if st.button("🔍 अपने Grievance की वर्तमान स्थिति जानें"): go_to('status_check')
+    if st.button("🔍 Grievance की वर्तमान स्थिति जानें"): go_to('status_check')
     if st.button("🔐 Officer/ Admin Login"): go_to('login')
 
 # --- PAGE 2: REGISTRATION ---
