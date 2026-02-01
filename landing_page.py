@@ -1,19 +1,17 @@
 import streamlit as st
 import os
+from datetime import datetime
 
 # ==========================================
 # CENTRAL CONTROL PANEL (STYLING)
 # ==========================================
-# 1. Logo & Image Controls
 LOGO_PATH = "assets/office_logo.png" 
 LOGO_WIDTH = 130 
-
-# 2. Background & Global Colors
 APP_BG_COLOR = "#131419"  
 HEADING_COLOR = "#FFFFFF" 
 LABEL_COLOR = "#FFFFFF"   
 
-# 3. Button Master Controls (SIZE & LOOK)
+# Button Styling
 BTN_HEIGHT = "70px"        
 BTN_WIDTH = "300px"         
 BTN_BG_COLOR = "#faf9f9"
@@ -22,15 +20,11 @@ BTN_BORDER_COLOR = "#fca311"
 BTN_BORDER_WIDTH = "4px"
 BTN_ROUNDNESS = "22px"
 BTN_HOVER_COLOR = "#a7c957"
-
-# --- FONT CONTROLS ---
 BTN_TEXT_SIZE = "17px"     
 BTN_FONT_WEIGHT = "900"    
 
-# 4. Label & Text Controls
-LABEL_FONT_SIZE = "20px"
-HEADING_FONT_SIZE_HI = "26px" 
-HEADING_FONT_SIZE_EN = "20px"
+# Label Styling
+LABEL_FONT_SIZE = "18px"
 
 # ==========================================
 # THE GLOBAL ALIGNMENT ENGINE (CSS)
@@ -39,17 +33,9 @@ st.set_page_config(page_title="GMS Alambagh", layout="centered")
 
 custom_css = f"""
 <style>
-    /* 1. Remove all Streamlit padding/header/footer */
-    header, footer, [data-testid="stHeader"] {{
-        visibility: hidden;
-        height: 0;
-    }}
+    header, footer, [data-testid="stHeader"] {{ visibility: hidden; height: 0; }}
+    .stApp {{ background-color: {APP_BG_COLOR}; }}
 
-    .stApp {{
-        background-color: {APP_BG_COLOR};
-    }}
-
-    /* 2. Main Container */
     .block-container {{
         max-width: 480px !important;
         padding-top: 2rem !important;
@@ -62,7 +48,6 @@ custom_css = f"""
         justify-content: flex-start !important; 
     }}
 
-    /* 3. Center blocks */
     [data-testid="stVerticalBlock"] {{
         width: 100% !important;
         display: flex !important;
@@ -70,20 +55,9 @@ custom_css = f"""
         align-items: center !important;
     }}
 
-    /* 4. Logo Alignment */
-    [data-testid="stImage"] {{
-        display: flex !important;
-        justify-content: center !important;
-        width: 100% !important;
-        margin-bottom: 6px !important;
-    }}
+    [data-testid="stImage"] {{ display: flex !important; justify-content: center !important; width: 100% !important; margin-bottom: 6px !important; }}
 
-    /* 5. UNIFORM BUTTON STYLING */
-    .stButton {{
-        width: 100% !important;
-        display: flex !important;
-        justify-content: center !important;
-    }}
+    .stButton {{ width: 100% !important; display: flex !important; justify-content: center !important; }}
 
     div.stButton > button {{
         background-color: {BTN_BG_COLOR} !important;
@@ -92,15 +66,12 @@ custom_css = f"""
         border-radius: {BTN_ROUNDNESS} !important;
         width: {BTN_WIDTH} !important; 
         height: {BTN_HEIGHT} !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+        display: flex !important; align-items: center !important; justify-content: center !important;
         margin: 10px 0px !important;
         transition: all 0.3s ease;
         box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }}
 
-    /* Target the text inside the button */
     div.stButton > button p {{
         font-size: {BTN_TEXT_SIZE} !important;
         font-weight: {BTN_FONT_WEIGHT} !important;
@@ -109,129 +80,140 @@ custom_css = f"""
 
     div.stButton > button:hover {{
         background-color: {BTN_HOVER_COLOR} !important;
-        border-color: {BTN_TEXT_COLOR} !important;
         transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(79, 139, 249, 0.4);
     }}
 
-    /* 6. Text and Heading Centering */
     .hindi-heading, .english-heading, p, label, .stMarkdown {{
         text-align: center !important;
         width: 100% !important;
         color: {LABEL_COLOR} !important;
     }}
 
-    .hindi-heading {{
-        color: {HEADING_COLOR};
-        font-size: 20px;
-        font-weight: 900;
-        margin-top: 0px;
-    }}
-    
-    .english-heading {{
-        color: {HEADING_COLOR};
-        font-size: {HEADING_FONT_SIZE_EN};
-        font-weight: bold;
-        margin-bottom: 20px;
-    }}
+    .hindi-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: 900; margin-top: 0px; }}
+    .english-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: bold; margin-bottom: 20px; }}
 
-    /* 7. Input Field Styling */
-    [data-testid="stTextInput"], [data-testid="stTextArea"] {{
+    [data-testid="stTextInput"], [data-testid="stTextArea"], [data-testid="stSelectbox"] {{
         width: 100% !important;
     }}
+    
+    /* Error text styling */
+    .err-text {{ color: #e63946; font-size: 14px; margin-top: -10px; margin-bottom: 10px; }}
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
 
 # ==========================================
-# PAGE NAVIGATION & STATE MANAGEMENT
+# MOCK DATABASE FUNCTIONS (Link your API here)
 # ==========================================
-if 'page' not in st.session_state:
-    st.session_state.page = 'landing'
+def get_dropdown_options(column_name):
+    # Logic to pull from DROPDOWN_MAPPINGS sheet
+    # Returning lists for now
+    options = {
+        "Designation": ["Select", "SSE", "JE", "Technician", "Helper"],
+        "Trade": ["Select", "Fitter", "Welder", "Painter", "Carpenter"],
+        "GrievanceType": ["Select", "Leave", "Salary", "Quarter", "Transfer"]
+    }
+    return options.get(column_name, ["Select"])
 
-if 'hrms_verified' not in st.session_state:
-    st.session_state.hrms_verified = False
-
-if 'found_emp_name' not in st.session_state:
-    st.session_state.found_emp_name = ""
+# ==========================================
+# PAGE NAVIGATION & STATE
+# ==========================================
+if 'page' not in st.session_state: st.session_state.page = 'landing'
+if 'hrms_verified' not in st.session_state: st.session_state.hrms_verified = False
+if 'found_emp_name' not in st.session_state: st.session_state.found_emp_name = ""
 
 def go_to(page_name):
     st.session_state.page = page_name
 
 # ==========================================
-# PAGE CONTENT (landing_page.py)
+# PAGE CONTENT
 # ==========================================
 
 # --- PAGE 1: LANDING ---
 if st.session_state.page == 'landing':
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH, width=LOGO_WIDTH)
-    
-    st.markdown(f'<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
-    
-    if st.button("📝 नया Grievance दर्ज करें"):
-        go_to('new_form')
+    st.markdown('<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
+    st.markdown('<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
+    if st.button("📝 नया Grievance दर्ज करें"): go_to('new_form')
+    if st.button("🔍 ग्रीवांस की वर्तमान स्थिति जानें"): go_to('status_check')
+    if st.button("🔐 Officer/ Admin Login"): go_to('login')
 
-    if st.button("🔍 ग्रीवांस की वर्तमान स्थिति जानें"):
-        go_to('status_check')
-
-    if st.button("🔐 Officer/ Admin Login"):
-        go_to('login')
-
-# --- PAGE 2: NEW GRIEVANCE REGISTRATION ---
+# --- PAGE 2: REGISTRATION ---
 elif st.session_state.page == 'new_form':
     st.markdown('<div class="hindi-heading">Grievance Registration</div>', unsafe_allow_html=True)
-    st.markdown('<div class="english-heading" style="font-size:18px;">शिकायत पंजीकरण</div>', unsafe_allow_html=True)
+    st.markdown('<div class="english-heading" style="font-size:18px;">समस्या पंजीकरण</div>', unsafe_allow_html=True)
 
-    # HRMS ID Input Box
-    hrms_input = st.text_input(
-        "Enter HRMS ID (अपनी HRMS ID दर्ज करें)", 
-        max_chars=6,
-        placeholder="6-Letter ID"
-    ).upper().strip()
-
-    # Verify Button
-    if st.button("Verify ID / सत्यापित करें"):
-        # Validation Rule
-        if len(hrms_input) == 6 and hrms_input.isalpha():
-            
-            # --- DATABASE LOOKUP (Logic to be linked to your Sheet) ---
-            # Search sheet 'EMPLOYEE_MAPPING' for hrms_input
-            # For now, using a test ID:
-            if hrms_input == "ABCDEF": 
-                st.session_state.found_emp_name = "Maitri Singh"
-                st.session_state.hrms_verified = True
-                st.success(f"✅ Employee Found: {st.session_state.found_emp_name}")
+    # 1. HRMS Verification Section
+    if not st.session_state.hrms_verified:
+        hrms_input = st.text_input("Enter HRMS ID (अपनी HRMS ID दर्ज करें)*", max_chars=6, placeholder="HRMS ID").upper().strip()
+        if st.button("Verify ID / सत्यापित करें"):
+            if len(hrms_input) == 6 and hrms_input.isalpha():
+                # Actual lookup logic for EMPLOYEE_MAPPING here
+                if hrms_input == "ABCDEF": # Test Case
+                    st.session_state.found_emp_name = "Maitri Singh"
+                    st.session_state.hrms_verified = True
+                    st.rerun()
+                else:
+                    st.error("❌ HRMS ID not found.")
             else:
-                st.session_state.hrms_verified = False
-                st.error("❌ HRMS ID not found in mapping sheet.")
-        else:
-            st.error("⚠️ Invalid Format! Enter exactly 6 CAPITAL alphabets.")
-
-    # Show Form only if ID is verified
-    if st.session_state.hrms_verified:
-        st.markdown("---")
-        st.info(f"Logging grievance for: **{st.session_state.found_emp_name}**")
-        # [Wait for user input to add more form fields here]
+                st.error("⚠️ Invalid Format! Use 6 CAPITAL alphabets.")
+    
+    # 2. Form Section (Appears after verification)
+    else:
+        st.success(f"✅ Employee Found: {st.session_state.found_emp_name}")
         
-    # Navigation Back
+        emp_name = st.text_input("Employee Name (कर्मचारी का नाम)*", value=st.session_state.found_emp_name, disabled=True)
+        emp_no = st.text_input("Employee Number (कर्मचारी संख्या)*", placeholder="Numbers/Letters only")
+        
+        designations = get_dropdown_options("Designation")
+        emp_desig = st.selectbox("Employee Designation (कर्मचारी का पद)*", designations)
+        
+        trades = get_dropdown_options("Trade")
+        emp_trade = st.selectbox("Employee Trade (कर्मचारी का ट्रेड)*", trades)
+        
+        emp_sec = st.text_input("Employee Section (कर्मचारी का कार्यस्थल)*")
+        
+        g_types = get_dropdown_options("GrievanceType")
+        g_type = st.selectbox("Grievance Type (समस्या का प्रकार)*", g_types)
+        
+        g_text = st.text_area("Brief of Grievance (समस्या का विवरण)*", max_chars=1000, height=150)
+
+        # Submit Logic
+        if st.button("✅ Submit Grievance"):
+            # Check mandatory fields
+            errors = []
+            if not emp_no: errors.append("Employee Number is required.")
+            if emp_desig == "Select": errors.append("Please select Designation.")
+            if emp_trade == "Select": errors.append("Please select Trade.")
+            if not emp_sec: errors.append("Section is required.")
+            if g_type == "Select": errors.append("Please select Grievance Type.")
+            if not g_text: errors.append("Brief of Grievance is required.")
+
+            if errors:
+                for err in errors:
+                    st.markdown(f'<p class="err-text">{err}</p>', unsafe_allow_html=True)
+            else:
+                # TIMESTAMP LOGIC
+                submission_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                ref_no = "REF" + datetime.now().strftime("%y%m%d%H%M%S")
+                
+                # --- DATA COLLECTION FOR EXCEL ---
+                # data = [ref_no, submission_time, hrms_input, emp_name, emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "Pending", "N/A", "N/A"]
+                # send_to_sheet(data)
+                
+                st.success(f"Grievance Registered! Ref No: {ref_no}")
+                st.balloons()
+
     if st.button("⬅️ Back to Home"):
         st.session_state.hrms_verified = False
         go_to('landing')
 
-# --- PAGE 3: STATUS CHECK ---
+# --- OTHER PAGES ---
 elif st.session_state.page == 'status_check':
     st.markdown('<div class="hindi-heading">स्थिति जांचें</div>', unsafe_allow_html=True)
-    st.markdown('<div class="english-heading">Check Grievance Status</div>', unsafe_allow_html=True)
-    st.text_input("Token Number / Reference No.")
-    if st.button("⬅️ Back to Home"):
-        go_to('landing')
+    if st.button("⬅️ Back to Home"): go_to('landing')
 
-# --- PAGE 4: ADMIN LOGIN ---
 elif st.session_state.page == 'login':
-    st.markdown('<div class="hindi-heading">Officer Login</div>', unsafe_allow_html=True)
-    st.text_input("HRMS ID / Username")
-    st.text_input("Login Key / Password", type="password")
-    if st.button("⬅️ Back to Home"):
-        go_to('landing')
+    st.markdown('<div class="hindi-heading">Admin Login</div>', unsafe_allow_html=True)
+    if st.button("⬅️ Back to Home"): go_to('landing')
