@@ -173,7 +173,7 @@ def generate_ref_no(hrms_id, df_grievance):
 # --- PAGE 1: LANDING ---
 if st.session_state.page == 'landing':
     if os.path.exists(LOGO_PATH): st.image(LOGO_PATH, width=LOGO_WIDTH)
-    st.markdown('<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ/n</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
     st.markdown('<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
     
     if st.button("📝 नया Grievance दर्ज करें"): go_to('new_form')
@@ -210,14 +210,14 @@ elif st.session_state.page == 'new_form':
             g_types = ["Select"] + [x for x in dd_df['GRIEVANCE_TYPE_LIST'].dropna().unique().tolist() if x]
         except: designations = trades = g_types = ["Select"]
 
-        emp_no = st.text_input("Employee Number")
-        emp_desig = st.selectbox("Designation", designations)
-        emp_trade = st.selectbox("Trade", trades)
-        emp_sec = st.text_input("Section")
-        g_type = st.selectbox("Grievance Type", g_types)
-        g_text = st.text_area("Complaint Details", max_chars=1000)
+        emp_no = st.text_input("Employee Number (कर्मचारी संख्या)")
+        emp_desig = st.selectbox("Designation (पद)", designations)
+        emp_trade = st.selectbox("Trade (ट्रेड)", trades)
+        emp_sec = st.text_input("Section (कार्यस्थल)")
+        g_type = st.selectbox("Grievance Type (समस्या का प्रकार)", g_types)
+        g_text = st.text_area("Complaint Details (समस्या का विवरण)", max_chars=1000)
 
-        if st.button("📤 Grievance जमा करें"):
+        if st.button("📤 Grievance पंजीकृत करें"):
             if not any(x in [None, "", "Select"] for x in [emp_no, emp_desig, emp_trade, emp_sec, g_type, g_text]):
                 try:
                     ws = get_sheet("GRIEVANCE")
@@ -227,11 +227,11 @@ elif st.session_state.page == 'new_form':
                     new_row = [ref_no, now_ist, st.session_state.active_hrms, st.session_state.found_emp_name, 
                                emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "NEW", "N/A", "N/A", "N/A", "N/A"]
                     ws.append_row(new_row)
-                    st.success(f"✅ Registered! Ref No: {ref_no}")
+                    st.success(f"✅ Grievance दर्ज करने के लिए धन्यवाद, शीघ्र ही इसका निस्तारण सुनिश्चित किया जायेगा। आपके Grievance का Reference संख्या है - {ref_no}")
                     st.balloons()
                     st.session_state.hrms_verified = False
                 except Exception as e: st.error(f"Error: {e}")
-            else: st.error("⚠️ All fields are required.")
+            else: st.error("⚠️ सभी कॉलम भरना अनिवार्य है")
 
     if st.button("🏠 Back to Home"):
         st.session_state.hrms_verified = False
