@@ -330,15 +330,16 @@ elif st.session_state.page == 'status_check':
 
 # --- PAGE 4: LOGIN ---
 elif st.session_state.page == 'login':
-    st.markdown('<div class="hindi-heading">Superuser Login</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hindi-heading">Dashboard Login</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hindi-heading">Officer/ Admin</div>', unsafe_allow_html=True)
     
     locked = st.session_state.super_verified
     s_hrms = st.text_input("Enter HRMS ID", value=st.session_state.active_super.get('HRMS_ID', ""), disabled=locked).upper().strip()
     
     if not st.session_state.super_verified:
-        if st.button("👤 Find User"):
+        if st.button("👤 Verify HRMS User"):
             if not s_hrms:
-                st.warning("⚠️ Please enter an HRMS ID.")
+                st.warning("⚠️ Please enter correct HRMS ID.")
             else:
                 with st.spinner("Fetching Details..."):
                     try:
@@ -349,7 +350,7 @@ elif st.session_state.page == 'login':
                             st.session_state.super_verified = True
                             st.rerun()
                         else: st.error("❌ User not found.")
-                    except: st.error("Connection Error.")
+                        
     else:
         st.success(f"✅ {st.session_state.active_super['NAME']}")
         key = st.text_input("Password", type="password")
