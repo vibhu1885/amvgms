@@ -1,93 +1,128 @@
 import streamlit as st
+import pandas as pd
 import base64
 import os
+from datetime import datetime
+from streamlit_gsheets import GSheetsConnection
 
 # ==========================================
-# 🎨 STYLE SETTINGS
+# ⚙️ GLOBAL CONFIG
 # ==========================================
-LOGO_FILENAME = "assets/office_logo.png" 
-LOGO_SIZE = 180                         
-LOGO_MARGIN = "20px"                    
-H_TEXT = "कैरिज वर्कशॉप, आलमाग, लखनऊ<br>Grievance Management System"
-H_COLOR = "white"; H_SIZE = "32px"; H_FONT = "'Trebuchet MS', sans-serif"; H_WEIGHT = "900"
+st.set_page_config(layout="wide", page_title="Railway GMS", initial_sidebar_state="collapsed")
 
-# FIXED BACKGROUND COLOR
-APP_BG_COLOR = "#091327"
+if "page" not in st.session_state:
+    st.session_state.page = "LANDING"
 
-B_MAX_WIDTH, B_WIDTH_MOBILE, B_HEIGHT = "420px", "90%", "85px"
-B_TEXT_COLOR, B_BG_COLOR, B_FONT_SIZE, B_FONT_WEIGHT = "#14213d", "#e5e5e5", "22px", "1000"
-B_ROUNDNESS, B_BORDER_WIDTH, B_BORDER_COLOR = "20px", "3px", "#fca311"
+def navigate_to(page_name):
+    st.session_state.page = page_name
+    st.rerun()
+
+# Global Hide (Sidebar & Header)
+st.markdown("<style>[data-testid='stSidebar'], [data-testid='stHeader'], footer {visibility: hidden;}</style>", unsafe_allow_html=True)
 
 # ==========================================
-# ⚙️ CSS ENGINE (STRICT COLOR & UI LOCK)
+# 🏠 SANDBOX 1: LANDING PAGE
 # ==========================================
-st.set_page_config(layout="wide", page_title="Railway Grievance System", initial_sidebar_state="collapsed")
+def show_landing():
+    # Landing Specific CSS
+    st.markdown("""
+        <style>
+        .stApp { background-color: #091327 !important; }
+        [data-testid="stVerticalBlock"] { align-items: center !important; justify-content: center !important; text-align: center !important; }
+        
+        /* Large Iconic Buttons */
+        div.stButton > button {
+            width: 420px !important; max-width: 90% !important; height: 85px !important;
+            background-color: #e5e5e5 !important; color: #14213d !important;
+            border-radius: 20px !important; border: 3px solid #fca311 !important;
+            margin: 15px auto !important; font-weight: 1000 !important; font-size: 22px !important;
+            box-shadow: 0px 6px 15px rgba(0,0,0,0.4);
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("<h1 style='color:white; margin-top:50px;'>कैरिज वर्कशॉप, आलमाग, लखनऊ<br>Grievance Management System</h1>", unsafe_allow_html=True)
+    
+    if st.button("📝 नया Grievance दर्ज करें"): navigate_to("REGISTRATION")
+    if st.button("🔍 स्थिति देखें"): navigate_to("STATUS_LOGIN")
+    if st.button("🔐 Officer Login"): navigate_to("OFFICER_LOGIN")
 
-st.markdown(f"""
-    <style>
-    /* 🛡️ FIXED APP BACKGROUND */
-    .stApp {{
-        background-color: {APP_BG_COLOR} !important;
-    }}
-
-    [data-testid="stSidebar"] {{ display: none; }}
-    [data-testid="stHeader"] {{ visibility: hidden; }}
-    footer {{ visibility: hidden; }}
-
-    [data-testid="stVerticalBlock"] {{ 
-        display: flex !important; 
-        flex-direction: column !important; 
-        align-items: center !important; 
-        justify-content: center !important; 
-        width: 100% !important; 
-        text-align: center !important;
-    }}
-
-    .header-container {{ text-align: center; margin-top: 10px; margin-bottom: 30px; width: 100%; }}
-    .custom-header {{ 
-        font-family: {H_FONT}; color: {H_COLOR}; font-size: {H_SIZE}; 
-        font-weight: {H_WEIGHT}; line-height: 1.2; text-shadow: 3px 3px 10px rgba(0,0,0,0.8); 
-    }}
-
-    @media (max-width: 600px) {{
-        .custom-header {{ font-size: 24px !important; }}
-        div.stButton > button {{ height: 75px !important; width: 95% !important; }}
-        div.stButton > button p {{ font-size: 18px !important; }}
-    }}
-
-    div.stButton > button {{
-        width: {B_MAX_WIDTH} !important; max-width: {B_WIDTH_MOBILE} !important; height: {B_HEIGHT} !important;
-        background-color: {B_BG_COLOR} !important; color: {B_TEXT_COLOR} !important; border-radius: {B_ROUNDNESS} !important;
-        border: {B_BORDER_WIDTH} solid {B_BORDER_COLOR} !important; margin: 15px auto !important; 
-        transition: all 0.3s ease; box-shadow: 0px 6px 15px rgba(0,0,0,0.4);
-        display: flex !important; align-items: center !important; justify-content: center !important;
-    }}
-
-    div.stButton > button p {{ font-size: {B_FONT_SIZE} !important; font-weight: {B_FONT_WEIGHT} !important; color: {B_TEXT_COLOR} !important; margin: 0 !important; }}
-    div.stButton > button:hover {{ transform: scale(1.02) !important; background-color: #a5be00 !important; border-color: white !important; }}
-    </style>
+# ==========================================
+# 📝 SANDBOX 2: REGISTRATION
+# ==========================================
+def show_registration():
+    # Registration Specific CSS (16px Labels)
+    st.markdown("""
+        <style>
+        .stApp { background-color: #091327 !important; }
+        [data-testid="stWidgetLabel"] p { font-size: 16px !important; font-weight: 800 !important; color: white !important; text-align: left !important; }
+        
+        /* Compact Form Buttons */
+        div.stButton > button, div.stFormSubmitButton > button {
+            width: 100% !important; height: 55px !important;
+            background-color: #fca311 !important; color: #14213d !important;
+            border-radius: 12px !important; font-weight: 800 !important;
+        }
+        .reg-container { width: 480px; max-width: 95%; margin: 0 auto; }
+        </style>
     """, unsafe_allow_html=True)
 
-# --- Logo Loader ---
-def get_base64_logo(file_path):
-    try:
-        if os.path.exists(file_path):
-            with open(file_path, "rb") as f:
-                return base64.b64encode(f.read()).decode()
-    except Exception: return None
-    return None
+    st.markdown("<h2 style='color:white; text-align:center;'>Registration Form</h2>", unsafe_allow_html=True)
+    
+    with st.container():
+        st.markdown('<div class="reg-container">', unsafe_allow_html=True)
+        with st.form("reg_form"):
+            hrms = st.text_input("HRMS ID").upper().strip()
+            g_type = st.selectbox("समस्या का प्रकार*", ["Electrical", "Mechanical", "Quarter", "Medical"])
+            desc = st.text_area("विवरण*", max_chars=100)
+            
+            if st.form_submit_button("Submit (दर्ज करें)"):
+                if not hrms or not desc:
+                    st.error("Please fill all fields")
+                else:
+                    st.session_state.last_ref = f"REF-{datetime.now().strftime('%y%m%d%H%M')}"
+                    navigate_to("SUCCESS")
+        
+        if st.button("⬅️ Back to Home"): navigate_to("LANDING")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-logo_data = get_base64_logo(LOGO_FILENAME)
-logo_tag = f'<img src="data:image/png;base64,{logo_data}" style="width:{LOGO_SIZE}px; max-width: 60%; margin-bottom:{LOGO_MARGIN}; filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.6));">' if logo_data else ""
+# ==========================================
+# ✅ SANDBOX 3: SUCCESS PAGE
+# ==========================================
+def show_success():
+    # Success Specific CSS
+    st.markdown("""
+        <style>
+        .stApp { background-color: #091327 !important; }
+        .success-card { text-align: center; margin-top: 80px; }
+        .balanced-title { color: #a5be00; font-size: 38px; font-weight: 1000; }
+        .ref-box-yellow { 
+            background-color: #fca311; color: #14213d; 
+            padding: 20px 40px; border-radius: 20px; 
+            font-size: 30px; font-weight: 1000; display: inline-block;
+            margin: 30px 0; font-family: monospace;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
-# --- UI ---
-st.markdown(f'<div class="header-container">{logo_tag}<div class="custom-header">{H_TEXT}</div></div>', unsafe_allow_html=True)
+    ref = st.session_state.get('last_ref', 'N/A')
+    st.markdown(f"""
+        <div class="success-card">
+            <div class="balanced-title">सफलतापूर्वक दर्ज!</div>
+            <div style="color:white; font-size:20px;">आपका Grievance नंबर नीचे दिया गया है:</div>
+            <div class="ref-box-yellow">{ref}</div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("🏠 Home"): navigate_to("LANDING")
 
-if st.button("📝 नया Grievance दर्ज करें"):
-    st.switch_page("https://github.com/vibhu1885/amvgms/blob/main/pages/1_Registration.py")
-
-if st.button("🔍 Grievance की स्थिति देखें"):
-    st.switch_page("pages/3_Status_Login.py")
-
-if st.button("🔐 Officer/ Admin Login"):
-    st.switch_page("pages/5_Admin_Login.py")
+# ==========================================
+# 🚦 MAIN ROUTER EXECUTION
+# ==========================================
+if st.session_state.page == "LANDING":
+    show_landing()
+elif st.session_state.page == "REGISTRATION":
+    show_registration()
+elif st.session_state.page == "SUCCESS":
+    show_success()
+# (Add status and login functions here as we build them)
