@@ -180,4 +180,107 @@ elif st.session_state.page == 'new_form':
         
         try:
             dd_df = pd.DataFrame(get_sheet("DROPDOWN_MAPPINGS").get_all_records())
-            designations = ["Select
+            designations = ["Select"] + [x for x in dd_df['DESIGNATION_LIST'].dropna().unique().tolist() if x]
+            trades = ["Select"] + [x for x in dd_df['TRADE_LIST'].dropna().unique().tolist() if x]
+            g_types = ["Select"] + [x for x in dd_df['GRIEVANCE_TYPE_LIST'].dropna().unique().tolist() if x]
+        except: designations = trades = g_types = ["Select"]
+
+        # Text inside these boxes will be LEFT aligned, Labels CENTERED
+        emp_no = st.text_input("Employee Number")
+        emp_desig = st.selectbox("Designation", designations)
+        emp_trade = st.selectbox("Trade", trades)
+        emp_sec = st.text_input("Section")
+        g_type = st.selectbox("Grievance Type", g_types)
+        g_text = st.text_area("Complaint Details", max_chars=1000)
+
+        if st.button("📤 Grievance जमा करें"):
+            if not any(x in [None, "", "Select"] for x in [emp_no, emp_desig, emp_trade, emp_sec, g_type, g_text]):
+                try:
+                    ws = get_sheet("GRIEVANCE")
+                    df_g = pd.DataFrame(ws.get_all_records())
+                    ref_no = generate_ref_no(st.session_state.active_hrms, df_g)
+                    new_row = [ref_no, datetime.now().strftime("%d-%m-%Y %H:%M"), st.session_state.active_hrms, st.session_state.found_emp_name, 
+                               emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "NEW", "N/A", "N/A"]
+                    ws.append_row(new_row)
+                    st.success(f"✅ Registered! Ref No: {ref_no}")
+                    st.balloons()
+                    st.session_state.hrms_verified = False
+                except Exception as e: st.error(f"Error: {e}")
+            else: st.error("⚠️ All fields are required.")
+
+    if st.button("🏠 Back to Home"):
+        st.session_state.hrms_verified = False
+        go_to('landing')
+
+# --- STATUS CHECK ---
+elif st.session_state.page == 'status_check':
+    st.markdown('<div class="hindi-heading">Grievance Status</div>', unsafe_allow_html=True)
+    ref_in = st.text_input("Enter Reference Number").strip()
+    
+    if st.button("🔍 Check Status"):
+        try:
+            df = pd.DataFrame(get_sheet("GRIEVANCE").get_all_records())
+            match = df[df['REFERENCE_NO'].astype(str) == ref_in]
+            if not match.empty:
+                res = match.iloc[0]
+                st.info(f"Status: {res['STATUS']}")
+                st.write(f"Remark: {res['OFFICER_REMARK']}")
+            else: st.error("❌ Not Found")
+        except: st.error("Error fetching data.")
+        
+    if st.button("🏠 Back to Home"): go_to('landing')
+
+# --- LOGIN ---
+elif st.session_state.page == 'login':
+    st.markdown('<div class="hindi-heading">Superuser Login</div>', unsafe_allow_html=True)
+    
+    locked = st.session_state.super_verified
+    s_hrms = st.text_input("Enter HRMS ID", value=st.session_state.active_super.get('HRMS_ID', ""), disabled=locked).upper().strip()
+    
+    if not st.session_state.super_verified:
+        if st.button("👤 Find User"):
+            try:
+                df = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
+                match = df[df['HRMS_ID'] == s_hrms]
+                if not match.empty:
+                    st.session_state.active_super = match.iloc[0].to_dict()
+                    st.session_state.super_verified = True
+                    st.rerun()
+                else: st.error("User not found.")
+            except: st.error("DB Error")
+    else:
+        st.success(f"✅ {st.session_state.active_super['NAME']}")
+        key = st.text_input("Password", type="password")
+        if st.button("🔓 Login"):
+            if str(key) == str(st.session_state.active_super['LOGIN_KEY']):
+                role = st.session_state.active_super['ROLE'].upper()
+                if role == "ADMIN": go_to('admin_dashboard')
+                elif role == "OFFICER": go_to('officer_dashboard')
+                elif role == "BOTH": go_to('role_selection')
+            else: st.error("Invalid Key")
+
+    if st.button("🏠 Back to Home"):
+        st.session_state.super_verified = False
+        go_to('landing')
+
+# --- ADMIN DASHBOARD ---
+elif st.session_state.page == 'admin_dashboard':
+    st.markdown('<div class="hindi-heading" style="font-size:35px;">Admin Dashboard</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="text-align:center; color:#fca311; font-weight:bold; margin-bottom:20px;">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
+
+    ws_g = get_sheet("GRIEVANCE")
+    df = pd.DataFrame(ws_g.get_all_records())
+
+    # Oversight Cards
+    st.markdown(f"""
+    <div class="card-box">
+        <div class="card" style="background:white;">TOTAL<br>{len(df)}</div>
+        <div class="card" style="background:#3498db; color:white;">NEW<br>{len(df[df['STATUS']=='NEW'])}</div>
+        <div class="card" style="background:#f1c40f;">PROCESS<br>{len(df[df['STATUS']=='UNDER PROCESS'])}</div>
+        <div class="card" style="background:#2ecc71; color:white;">RESOLVED<br>{len(df[df['STATUS']=='RESOLVED'])}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Filters
+    c1, c2, c3, c4 = st.columns([2, 2, 2, 2])
+    with c1: f_hrms = st.text_input("Filter HRMS").upper()
