@@ -24,85 +24,46 @@ def get_sheet(sheet_name):
 LOGO_PATH = "assets/office_logo.png"
 LOGO_WIDTH = 130
 APP_BG_COLOR = "#131419"
-HEADING_COLOR = "#FFFFFF"
 BTN_BG = "#faf9f9"
 BTN_TEXT = "#131419"
 BTN_BORDER = "#fca311"
-BTN_HOVER = "#a7c957"
 
 # ==========================================
-# 1. PAGE-SPECIFIC CSS INJECTORS
+# PAGE-SPECIFIC CSS (STRICT)
 # ==========================================
 
-def inject_landing_css():
-    """Strict Centering for Landing and Login"""
+def apply_global_styles(mode="narrow"):
+    max_w = "1200px" if mode == "wide" else "500px"
     st.markdown(f"""
     <style>
         header, footer, [data-testid="stHeader"] {{ visibility: hidden; height: 0; }}
         .stApp {{ background-color: {APP_BG_COLOR}; }}
-        .block-container {{ max-width: 480px !important; padding-top: 2rem !important; margin: auto; }}
+        .block-container {{ max-width: {max_w} !important; padding-top: 2rem !important; margin: auto; }}
         
-        /* Logo Center Lock */
-        [data-testid="stImage"] {{ display: flex !important; justify-content: center !important; width: 100% !important; }}
-        [data-testid="stImage"] img {{ margin: 0 auto !important; }}
-        
-        /* Button Center Lock */
-        .stButton {{ display: flex !important; justify-content: center !important; width: 100% !important; }}
+        /* Master Button Style - Forced Bold & Shadows */
         div.stButton > button {{
             background-color: {BTN_BG} !important; color: {BTN_TEXT} !important;
             border: 4px solid {BTN_BORDER} !important; border-radius: 22px !important;
-            width: 300px !important; height: 70px !important; margin: 15px auto !important;
+            width: 100% !important; height: 70px !important;
             font-weight: 900 !important; font-size: 17px !important;
             box-shadow: 0 8px 16px rgba(0,0,0,0.6) !important;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+            transition: all 0.4s ease-in-out !important;
         }}
-        div.stButton > button:hover {{ background-color: {BTN_HOVER} !important; transform: translateY(-4px) !important; }}
-        div.stButton > button p {{ font-weight: 900 !important; color: {BTN_TEXT} !important; margin: 0 !important; }}
+        div.stButton > button:hover {{ background-color: #a7c957 !important; transform: translateY(-4px); }}
+        div.stButton > button p {{ font-weight: 900 !important; color: {BTN_TEXT} !important; }}
 
-        .hindi-heading, .english-heading {{ text-align: center !important; width: 100%; color: white; }}
-    </style>
-    """, unsafe_allow_html=True)
-
-def inject_form_css():
-    """Centering for Logo/Buttons but Left-Align for Labels"""
-    st.markdown(f"""
-    <style>
-        header, footer, [data-testid="stHeader"] {{ visibility: hidden; height: 0; }}
-        .stApp {{ background-color: {APP_BG_COLOR}; }}
-        .block-container {{ max-width: 480px !important; padding-top: 2rem !important; margin: auto; }}
+        /* Text Alignments */
+        .hindi-heading, .english-heading {{ text-align: center !important; color: white; width: 100%; }}
+        label {{ text-align: left !important; color: white !important; font-weight: bold !important; }}
         
-        [data-testid="stImage"], .stButton {{ display: flex !important; justify-content: center !important; width: 100% !important; }}
-        div.stButton > button {{
-            background-color: {BTN_BG} !important; color: {BTN_TEXT} !important;
-            border: 4px solid {BTN_BORDER} !important; border-radius: 22px !important;
-            width: 300px !important; height: 70px !important; margin: 15px auto !important;
-            font-weight: 900 !important;
-        }}
-        
-        /* Form Label Left Alignment */
-        label {{ text-align: left !important; color: white !important; font-weight: bold !important; width: 100% !important; display: block; }}
-        .stTextInput, .stSelectbox, .stTextArea {{ text-align: left !important; }}
-        .hindi-heading, .english-heading {{ text-align: center !important; width: 100%; color: white; }}
-    </style>
-    """, unsafe_allow_html=True)
-
-def inject_admin_css():
-    """Wide Layout for Dashboard Tables"""
-    st.markdown(f"""
-    <style>
-        header, footer, [data-testid="stHeader"] {{ visibility: hidden; height: 0; }}
-        .stApp {{ background-color: {APP_BG_COLOR}; }}
-        .block-container {{ max-width: 1200px !important; padding-top: 1.5rem !important; }}
-        .hindi-heading {{ text-align: center !important; color: white; font-size: 35px !important; font-weight: 900; }}
-        
-        /* Card Styling */
+        /* Dashboard Cards */
         .card-box {{ display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }}
-        .card {{ padding: 12px; border-radius: 10px; text-align: center; font-weight: 900; color: #131419; min-width: 140px; }}
+        .card {{ padding: 15px; border-radius: 12px; text-align: center; font-weight: 900; color: #131419; min-width: 140px; }}
     </style>
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. STATE & NAVIGATION
+# STATE & NAVIGATION
 # ==========================================
 if 'page' not in st.session_state: st.session_state.page = 'landing'
 if 'hrms_verified' not in st.session_state: st.session_state.hrms_verified = False
@@ -113,96 +74,80 @@ def go_to(page_name):
     st.session_state.page = page_name
     st.rerun()
 
-# ==========================================
-# 3. PAGE ROUTING
-# ==========================================
-
 st.set_page_config(page_title="GMS Alambagh", layout="centered")
 
-# --- LANDING ---
-if st.session_state.page == 'landing':
-    inject_landing_css()
-    if os.path.exists(LOGO_PATH): st.image(LOGO_PATH, width=LOGO_WIDTH)
-    st.markdown('<div class="hindi-heading" style="font-size:22px; font-weight:900;">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
-    st.markdown('<div class="english-heading" style="font-size:18px;">Grievance Management System</div>', unsafe_allow_html=True)
-    if st.button("📝 नया Grievance दर्ज करें"): go_to('new_form')
-    if st.button("🔍 ग्रीवांस की वर्तमान स्थिति जानें"): go_to('status_check')
-    if st.button("🔐 Officer/ Admin Login"): go_to('login')
+# ==========================================
+# PAGE ROUTING
+# ==========================================
 
-# --- REGISTRATION ---
+# --- LANDING PAGE ---
+if st.session_state.page == 'landing':
+    apply_global_styles("narrow")
+    
+    # PHYSICAL LOCK: Using columns to force the center
+    col1, col2, col3 = st.columns([0.1, 0.8, 0.1])
+    with col2:
+        if os.path.exists(LOGO_PATH):
+            # Inner column for logo to be exactly centered
+            l_1, l_2, l_3 = st.columns([1, 1.2, 1])
+            with l_2: st.image(LOGO_PATH, width=LOGO_WIDTH)
+            
+        st.markdown('<div class="hindi-heading" style="font-size:22px; font-weight:900;">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
+        st.markdown('<div class="english-heading" style="font-size:18px;">Grievance Management System</div>', unsafe_allow_html=True)
+        
+        # Every button inside col2 is now physically locked to the center 80% of the 500px container
+        if st.button("📝 नया Grievance दर्ज करें"): go_to('new_form')
+        if st.button("🔍 ग्रीवांस की वर्तमान स्थिति जानें"): go_to('status_check')
+        if st.button("🔐 Officer/ Admin Login"): go_to('login')
+
+# --- REGISTRATION PAGE ---
 elif st.session_state.page == 'new_form':
-    inject_form_css()
+    apply_global_styles("narrow")
     st.markdown('<div class="hindi-heading">Grievance Registration</div>', unsafe_allow_html=True)
+    
     if not st.session_state.hrms_verified:
         hrms_in = st.text_input("Enter HRMS ID*", max_chars=6).upper().strip()
-        if st.button("🔎 Verify ID"):
-            try:
-                df = pd.DataFrame(get_sheet("EMPLOYEE_MAPPING").get_all_records())
-                match = df[df['HRMS_ID'] == hrms_in]
-                if not match.empty:
-                    st.session_state.found_emp_name = match.iloc[0]['EMPLOYEE_NAME']
-                    st.session_state.hrms_verified = True
-                    st.session_state.active_hrms = hrms_in
-                    st.rerun()
-                else: st.error("❌ HRMS ID not found.")
-            except Exception as e: st.error(f"Error: {e}")
+        # Small columns for the verify button to keep it centered
+        v1, v2, v3 = st.columns([1, 2, 1])
+        with v2:
+            if st.button("🔎 Verify ID"):
+                try:
+                    df = pd.DataFrame(get_sheet("EMPLOYEE_MAPPING").get_all_records())
+                    match = df[df['HRMS_ID'] == hrms_in]
+                    if not match.empty:
+                        st.session_state.found_emp_name = match.iloc[0]['EMPLOYEE_NAME']
+                        st.session_state.hrms_verified = True
+                        st.session_state.active_hrms = hrms_in
+                        st.rerun()
+                    else: st.error("❌ HRMS ID not found.")
+                except Exception as e: st.error(f"Error: {e}")
     else:
         st.success(f"✅ Employee: {st.session_state.found_emp_name}")
-        emp_no = st.text_input("Employee Number (कर्मचारी संख्या)*")
-        # Rest of your registration fields (designation, trade, etc.)
-        if st.button("📤 Grievance जमा करें"):
-            st.success("Submitting...")
-    if st.button("🏠 Back to Home"):
-        st.session_state.hrms_verified = False
-        go_to('landing')
-
-# --- LOGIN ---
-elif st.session_state.page == 'login':
-    inject_landing_css()
-    st.markdown('<div class="hindi-heading">Superuser Login</div>', unsafe_allow_html=True)
-    locked = st.session_state.super_verified
-    s_hrms = st.text_input("Enter Your HRMS ID", value=st.session_state.active_super.get('HRMS_ID', ""), disabled=locked).upper().strip()
-    if not st.session_state.super_verified:
-        if st.button("👤 Find User"):
-            try:
-                df_off = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
-                match = df_off[df_off['HRMS_ID'] == s_hrms]
-                if not match.empty:
-                    st.session_state.active_super = match.iloc[0].to_dict()
-                    st.session_state.super_verified = True
-                    st.rerun()
-                else: st.error("❌ HRMS ID not found.")
-            except Exception as e: st.error(f"Error: {e}")
-    else:
-        st.success(f"✅ {st.session_state.active_super['NAME']}")
-        key = st.text_input("Enter Key", type="password")
-        if st.button("🔓 Login"):
-            if str(key) == str(st.session_state.active_super['LOGIN_KEY']):
-                role = st.session_state.active_super['ROLE'].upper()
-                if role == "ADMIN": go_to('admin_dashboard')
-                elif role == "OFFICER": go_to('officer_dashboard')
-                elif role == "BOTH": go_to('role_selection')
-            else: st.error("❌ Invalid Key.")
-    if st.button("🏠 Back to Home"):
-        st.session_state.super_verified = False
-        go_to('landing')
+        emp_no = st.text_input("Employee Number*")
+        # Rest of form...
+        if st.button("📤 Grievance जमा करें"): st.info("Processing...")
+        
+    b1, b2, b3 = st.columns([1, 2, 1])
+    with b2:
+        if st.button("🏠 Back to Home"):
+            st.session_state.hrms_verified = False
+            go_to('landing')
 
 # --- ADMIN DASHBOARD ---
 elif st.session_state.page == 'admin_dashboard':
-    inject_admin_css()
-    st.markdown('<div class="hindi-heading">Admin Dashboard</div>', unsafe_allow_html=True)
+    apply_global_styles("wide")
+    st.markdown('<div class="hindi-heading" style="font-size:35px;">Admin Dashboard</div>', unsafe_allow_html=True)
     st.markdown(f'<div style="text-align:center; color:#fca311; font-weight:bold;">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
 
     ws_g = get_sheet("GRIEVANCE")
     df = pd.DataFrame(ws_g.get_all_records())
     
-    # Oversights
     st.markdown(f"""
     <div class="card-box">
         <div class="card" style="background:white;">Total: {len(df)}</div>
-        <div class="card" style="background:#3498db;">NEW: {len(df[df['STATUS']=='NEW'])}</div>
+        <div class="card" style="background:#3498db; color:white;">NEW: {len(df[df['STATUS']=='NEW'])}</div>
         <div class="card" style="background:#f1c40f;">PROCESS: {len(df[df['STATUS']=='UNDER PROCESS'])}</div>
-        <div class="card" style="background:#2ecc71;">RESOLVED: {len(df[df['STATUS']=='RESOLVED'])}</div>
+        <div class="card" style="background:#2ecc71; color:white;">RESOLVED: {len(df[df['STATUS']=='RESOLVED'])}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -214,7 +159,7 @@ elif st.session_state.page == 'admin_dashboard':
         with c2: st.write(f"**{row['EMP_NAME']}**\n{row['GRIEVANCE_TEXT']}")
         with c3:
             if row['STATUS'] == "NEW":
-                if st.button("Mark Under Process", key=f"mark_{i}"):
+                if st.button("Mark Process", key=f"mark_{i}"):
                     ws_g.update_cell(i+2, 11, "UNDER PROCESS")
                     st.rerun()
             else: st.info(row['STATUS'])
