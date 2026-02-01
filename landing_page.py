@@ -418,4 +418,118 @@ elif st.session_state.page == 'admin_dashboard':
                 
                 d1, d2, d3 = st.columns(3)
                 d1.markdown(f"Name: **{row['EMP_NAME']}**<br>HRMS: {row['HRMS_ID']}", unsafe_allow_html=True)
-                d2.markdown(f"Desig: {row['DESIGNATION
+                d2.markdown(f"Desig: {row['DESIGNATION']}<br>Section: {row['SECTION']}", unsafe_allow_html=True)
+                d3.markdown(f"Type: {row['GRIEVANCE_TYPE']}", unsafe_allow_html=True)
+                
+                st.info(f"**Description:** {row['GRIEVANCE_TEXT']}")
+
+                if row['STATUS'] == "NEW":
+                    sel = st.selectbox("Assign To:", officers, key=f"adm_{i}")
+                    if sel != "Select Officer":
+                        try:
+                            now = get_ist_time()
+                            cell = ws_g.find(str(row['REFERENCE_NO']))
+                            ws_g.update_cell(cell.row, 11, "UNDER PROCESS")
+                            ws_g.update_cell(cell.row, 12, sel) # Col 12: Name
+                            ws_g.update_cell(cell.row, 13, now) # Col 13: Date
+                            st.success("Assigned!")
+                            time.sleep(0.5)
+                            st.rerun()
+                        except: st.error("Update Failed")
+                else:
+                    assign_date = row.get('ASSIGN_DATE', row.get('OFFICER_REMARK', 'N/A')) 
+                    st.markdown(f"""
+                    <div style="background-color: #2c2e3a; padding: 10px; border-radius: 8px; border: 1px solid #444;">
+                        <span style="color: #fca311; font-weight: bold;">Assigned To:</span> <span style="color: white; font-weight: bold;">{row['MARKED_OFFICER']}</span>
+                        <span style="color: #fca311; font-weight: bold; margin-left: 15px;">Date:</span> <span style="color: white;">{assign_date}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                st.markdown("---")
+
+    if st.button("🚪 Logout"):
+        st.session_state.super_verified = False
+        go_to('landing')
+
+# --- PAGE 6: OFFICER DASHBOARD ---
+elif st.session_state.page == 'officer_dashboard':
+    st.markdown('<div class="hindi-heading" style="font-size:35px;">Officer Dashboard</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="welcome-msg">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
+
+    my_name_rank = f"{st.session_state.active_super['NAME']} ({st.session_state.active_super['RANK']})"
+    
+    ws_g = get_sheet("GRIEVANCE")
+    df = pd.DataFrame(ws_g.get_all_records())
+    my_df = df[df['MARKED_OFFICER'] == my_name_rank]
+
+    cnt_total = len(my_df)
+    cnt_pending = len(my_df[my_df['STATUS']=='UNDER PROCESS'])
+    cnt_resolved = len(my_df[my_df['STATUS']=='RESOLVED'])
+
+    st.markdown(f"""
+    <div class="score-container">
+        <div class="score-card" style="background-color: white;">
+            <div class="score-number">{cnt_total}</div><div class="score-label">TOTAL</div>
+        </div>
+        <div class="score-card" style="background-color: #f1c40f;">
+            <div class="score-number">{cnt_pending}</div><div class="score-label">PENDING</div>
+        </div>
+        <div class="score-card" style="background-color: #2ecc71; color: white;">
+            <div class="score-number">{cnt_resolved}</div><div class="score-label">RESOLVED</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.write("### 🔽 Filter My Tasks")
+    off_filter = st.radio("Show:", ["ALL", "PENDING", "RESOLVED"], horizontal=True, key="off_rad")
+    
+    view_df = my_df.copy()
+    if off_filter == "PENDING": view_df = view_df[view_df['STATUS'] == 'UNDER PROCESS']
+    elif off_filter == "RESOLVED": view_df = view_df[view_df['STATUS'] == 'RESOLVED']
+
+    st.markdown("---")
+    if view_df.empty: st.info("No tasks found.")
+    else:
+        for i, row in view_df.iterrows():
+            with st.container():
+                c1, c2, c3 = st.columns([2, 4, 2])
+                color = "#f1c40f" if row['STATUS'] == "UNDER PROCESS" else "#2ecc71"
+                c1.markdown(f"**Ref:** `{row['REFERENCE_NO']}`")
+                c2.markdown(f"**Status:** <span style='color:{color}; font-weight:bold;'>{row['STATUS']}</span>", unsafe_allow_html=True)
+                c3.markdown(f"📅 Assigned: {row.get('ASSIGN_DATE', 'N/A')}")
+
+                d1, d2, d3 = st.columns(3)
+                d1.markdown(f"Name: **{row['EMP_NAME']}**<br>HRMS: {row['HRMS_ID']}", unsafe_allow_html=True)
+                d2.markdown(f"Desig: {row['DESIGNATION']}<br>Section: {row['SECTION']}", unsafe_allow_html=True)
+                d3.markdown(f"Type: {row['GRIEVANCE_TYPE']}", unsafe_allow_html=True)
+                
+                st.info(f"**Issue:** {row['GRIEVANCE_TEXT']}")
+
+                if row['STATUS'] == "UNDER PROCESS":
+                    rem_key = f"rem_{i}"
+                    remark = st.text_area("Resolution Remarks (Mandatory)*", key=rem_key)
+                    if st.button("✅ Mark as Resolved", key=f"btn_{i}"):
+                        if not remark.strip():
+                            st.error("⚠️ Please enter resolution remarks.")
+                        else:
+                            try:
+                                now_ist = get_ist_time()
+                                cell = ws_g.find(str(row['REFERENCE_NO']))
+                                ws_g.update_cell(cell.row, 11, "RESOLVED")
+                                ws_g.update_cell(cell.row, 14, remark)
+                                ws_g.update_cell(cell.row, 15, now_ist)
+                                st.success("Resolved Successfully!")
+                                time.sleep(0.5)
+                                st.rerun()
+                            except: st.error("Update Error")
+                else:
+                    st.markdown(f"""
+                    <div style="background-color: #2c2e3a; padding: 10px; border-radius: 8px;">
+                        <span style="color: #2ecc71; font-weight: bold;">Resolution:</span> {row.get('OFFICER_REMARK', 'N/A')}<br>
+                        <span style="color: #2ecc71; font-weight: bold;">Date:</span> {row.get('RESOLVE_DATE', 'N/A')}
+                    </div>
+                    """, unsafe_allow_html=True)
+                st.markdown("---")
+
+    if st.button("🚪 Logout"):
+        st.session_state.super_verified = False
+        go_to('landing')
