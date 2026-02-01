@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import time
 import pytz
-import textwrap  # <--- CRITICAL IMPORT FOR FIXING HTML
+import textwrap
 from datetime import datetime
 from google.oauth2.service_account import Credentials
 import gspread
@@ -100,7 +100,6 @@ st.markdown(f"""
         border-color: #a7c957 !important;
         transform: translateY(-4px) scale(1.02) !important;
     }}
-    
     div.stButton > button p {{ 
         font-weight: 900 !important; 
         font-size: 20px !important;
@@ -116,32 +115,33 @@ st.markdown(f"""
     .score-number {{ font-size: 28px; line-height: 1.2; }}
     .score-label {{ font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }}
 
-    /* 7. STATUS CARD STYLE */
+    /* 7. STATUS CARD STYLE (UPDATED) */
     .g-card {{
-        background-color: white;
-        border-radius: 12px;
+        border-radius: 15px;
         padding: 20px;
         margin-bottom: 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        border-left: 8px solid #ccc;
+        box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+        border-left: 10px solid #ccc; /* Will be overridden by inline style */
+        color: #131419;
         font-family: sans-serif;
     }}
-    .g-ref {{ font-size: 20px; font-weight: 900; color: #131419; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }}
-    .g-label {{ font-size: 12px; font-weight: bold; color: #888; text-transform: uppercase; margin-top: 12px; }}
-    .g-value {{ font-size: 16px; color: #222; font-weight: 500; line-height: 1.4; }}
+    .g-ref {{ font-size: 22px; font-weight: 900; color: #000; margin-bottom: 10px; border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 8px; }}
+    .g-label {{ font-size: 13px; font-weight: bold; color: #444; text-transform: uppercase; margin-top: 12px; letter-spacing: 0.5px; }}
+    .g-value {{ font-size: 16px; color: #000; font-weight: 600; line-height: 1.4; }}
     
     /* Action Badges */
-    .badge-base {{ display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 900; margin-top: 5px; }}
-    .badge-new {{ background-color: #e3f2fd; color: #1976d2; }}
-    .badge-process {{ background-color: #fff3cd; color: #856404; }}
-    .badge-resolved {{ background-color: #d4edda; color: #155724; }}
+    .badge-base {{ display: inline-block; padding: 8px 14px; border-radius: 20px; font-size: 15px; font-weight: 900; margin-top: 5px; border: 1px solid rgba(0,0,0,0.1); }}
+    .badge-new {{ background-color: white; color: #1976d2; }}
+    .badge-process {{ background-color: white; color: #856404; }}
+    .badge-resolved {{ background-color: white; color: #155724; }}
     
     .remark-box {{
-        background-color: #f8f9fa;
-        border-left: 4px solid #2ecc71;
+        background-color: rgba(255,255,255,0.6);
+        border-left: 5px solid #2ecc71;
         padding: 12px;
         margin-top: 12px;
-        color: #444;
+        color: #000;
+        font-weight: 500;
         border-radius: 0 5px 5px 0;
     }}
 
@@ -236,7 +236,7 @@ elif st.session_state.page == 'new_form':
         st.session_state.hrms_verified = False
         go_to('landing')
 
-# --- PAGE 3: STATUS CHECK (FIXED RENDERING) ---
+# --- PAGE 3: STATUS CHECK (COLOR CODED BACKGROUNDS) ---
 elif st.session_state.page == 'status_check':
     st.markdown('<div class="hindi-heading">Grievance History</div>', unsafe_allow_html=True)
     hrms_in = st.text_input("Enter Your HRMS ID").upper().strip()
@@ -255,48 +255,61 @@ elif st.session_state.page == 'status_check':
                     
                     for i, row in matches.iterrows():
                         status = row['STATUS']
+                        
+                        # --- DYNAMIC COLOR SCHEME ---
+                        bg_color = "#fff"
                         border_color = "#ccc"
                         action_text = ""
                         action_class = ""
                         extra_details = ""
                         
                         if status == "NEW":
-                            border_color = "#3498db"
+                            bg_color = "#e3f2fd" # Light Blue BG
+                            border_color = "#1565c0"
                             action_text = "Yet to Assign"
                             action_class = "badge-new"
                         elif status == "UNDER PROCESS":
-                            border_color = "#f1c40f"
+                            bg_color = "#fff9c4" # Light Yellow BG
+                            border_color = "#fbc02d"
                             action_text = "Assigned to Related Officer"
                             action_class = "badge-process"
-                            # Dedent this string so it's not treated as code
+                            
                             assign_date = row.get('ASSIGN_DATE', 'N/A')
                             extra_details = textwrap.dedent(f"""
                             <div style="margin-top:10px;">
-                                <span style="font-weight:bold; color:#555;">Assigned On:</span> {assign_date}
+                                <span style="font-weight:900; color:#000;">Assigned On:</span> 
+                                <span style="color:#000; font-weight:600;">{assign_date}</span>
                             </div>""")
+                        
                         elif status == "RESOLVED":
-                            border_color = "#2ecc71"
+                            bg_color = "#e8f5e9" # Light Green BG
+                            border_color = "#2e7d32"
                             action_text = "Resolved"
                             action_class = "badge-resolved"
-                            # Dedent this string too
+                            
                             assign_date = row.get('ASSIGN_DATE', 'N/A')
                             resolve_date = row.get('RESOLVE_DATE', 'N/A')
                             officer = row.get('MARKED_OFFICER', 'N/A')
                             remark = row.get('OFFICER_REMARK', 'N/A')
+                            
                             extra_details = textwrap.dedent(f"""
                             <div style="margin-top:10px;">
-                                <div><span style="font-weight:bold; color:#555;">Assigned On:</span> {assign_date}</div>
-                                <div><span style="font-weight:bold; color:#555;">Resolved On:</span> {resolve_date}</div>
+                                <div>
+                                    <span style="font-weight:900; color:#000;">Assigned On:</span> 
+                                    <span style="color:#000; font-weight:600;">{assign_date}</span>
+                                </div>
+                                <div>
+                                    <span style="font-weight:900; color:#000;">Resolved On:</span> 
+                                    <span style="color:#000; font-weight:600;">{resolve_date}</span>
+                                </div>
                                 <div class="remark-box">
-                                    <b>Remark by {officer}:</b><br>
+                                    <b style="color:#000;">Remark by {officer}:</b><br>
                                     "{remark}"
                                 </div>
                             </div>""")
 
-                        # The main card string
-                        # Using textwrap.dedent ensures clean HTML rendering
                         card_html = textwrap.dedent(f"""
-                        <div class="g-card" style="border-left-color: {border_color};">
+                        <div class="g-card" style="background-color: {bg_color}; border-left-color: {border_color};">
                             <div class="g-ref">Ref No: {row['REFERENCE_NO']}</div>
                             <div class="g-label">Grievance Description</div>
                             <div class="g-value">{row['GRIEVANCE_TEXT']}</div>
