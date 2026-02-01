@@ -6,98 +6,19 @@ from google.oauth2.service_account import Credentials
 import gspread
 
 # ==========================================
-# 0. CONFIGURATION & ASSETS
+# 0. SETUP
 # ==========================================
 LOGO_PATH = "assets/office_logo.png"
 LOGO_WIDTH = 130
 APP_BG_COLOR = "#131419"
 
-# 1. SET WIDE LAYOUT GLOBALLY
-st.set_page_config(page_title="GMS Alambagh", layout="wide")
-
-# ==========================================
-# 1. THE "CLEAN SLATE" CSS
-# ==========================================
-st.markdown(f"""
-<style>
-    /* HIDE STREAMLIT HEADER/FOOTER */
-    header, footer, [data-testid="stHeader"] {{ visibility: hidden; height: 0; }}
-    
-    /* BACKGROUND */
-    .stApp {{ background-color: {APP_BG_COLOR}; }}
-
-    /* LOGO CENTERING */
-    [data-testid="stImage"] {{
-        display: flex;
-        justify-content: center;
-        width: 100%;
-        margin-bottom: 20px;
-    }}
-    [data-testid="stImage"] img {{ margin: 0 auto; }}
-
-    /* HEADINGS */
-    .hindi-heading {{ text-align: center; color: white; font-weight: 900; font-size: 24px; }}
-    .english-heading {{ text-align: center; color: white; font-weight: bold; font-size: 18px; margin-bottom: 30px; }}
-
-    /* INPUT LABELS (White & Left Aligned) */
-    .stTextInput label, .stSelectbox label, .stTextArea label {{
-        color: white !important;
-        font-weight: bold !important;
-        font-size: 15px !important;
-    }}
-
-    /* BUTTON STYLING (The 480px Rule) */
-    div.stButton > button {{
-        background-color: #faf9f9 !important;
-        color: #131419 !important;
-        border: 4px solid #fca311 !important;
-        border-radius: 20px !important;
-        
-        /* WIDTH CONTROL */
-        width: 480px !important;
-        max-width: 100% !important; /* Mobile Safety */
-        height: 70px !important;
-        
-        /* ALIGNMENT */
-        margin: 10px auto !important; /* Physically centers button */
-        display: block !important;
-        
-        /* TEXT */
-        font-weight: 900 !important;
-        font-size: 18px !important;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        transition: transform 0.2s;
-    }}
-    div.stButton > button:hover {{
-        background-color: #a7c957 !important;
-        transform: scale(1.02);
-    }}
-    div.stButton > button p {{ font-weight: 900 !important; }}
-
-    /* ADMIN DASHBOARD CARDS */
-    .card-container {{ display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 30px; }}
-    .card {{ 
-        background-color: white; 
-        padding: 15px 25px; 
-        border-radius: 10px; 
-        text-align: center; 
-        font-weight: 900; 
-        color: #131419; 
-        min-width: 160px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    }}
-
-</style>
-""", unsafe_allow_html=True)
-
-# ==========================================
-# 2. STATE & DB
-# ==========================================
+# Initialize State
 if 'page' not in st.session_state: st.session_state.page = 'landing'
 if 'hrms_verified' not in st.session_state: st.session_state.hrms_verified = False
 if 'super_verified' not in st.session_state: st.session_state.super_verified = False
 if 'active_super' not in st.session_state: st.session_state.active_super = {}
 
+# DATABASE CONNECT
 def get_sheet(sheet_name):
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     if "gcp_service_account" not in st.secrets:
@@ -108,6 +29,93 @@ def get_sheet(sheet_name):
     client = gspread.authorize(creds)
     return client.open("Grievance_DB").worksheet(sheet_name)
 
+# ==========================================
+# 1. LAYOUT CONFIGURATION
+# ==========================================
+# We use 'wide' to allow the Admin Dashboard to expand.
+# We will constrain the other pages using CSS.
+st.set_page_config(page_title="GMS Alambagh", layout="wide")
+
+# Determine Width: 1200px for Admin, 480px for Mobile Views
+container_max_width = "1200px" if st.session_state.page == 'admin_dashboard' else "480px"
+
+st.markdown(f"""
+<style>
+    /* HIDE HEADER/FOOTER */
+    header, footer, [data-testid="stHeader"] {{ visibility: hidden; height: 0; }}
+    .stApp {{ background-color: {APP_BG_COLOR}; }}
+
+    /* MAIN CONTAINER: THE 480px LOCK */
+    .block-container {{
+        max-width: {container_max_width} !important;
+        padding-top: 2rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        margin: 0 auto !important; /* Centers the container on screen */
+    }}
+
+    /* LOGO: CENTERED */
+    [data-testid="stImage"] {{
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin-bottom: 15px;
+    }}
+    [data-testid="stImage"] img {{ margin: 0 auto; }}
+
+    /* HEADINGS: CENTERED */
+    .hindi-heading {{ text-align: center; color: white; font-weight: 900; font-size: 22px; margin-bottom: 5px; }}
+    .english-heading {{ text-align: center; color: white; font-weight: bold; font-size: 18px; margin-bottom: 30px; }}
+
+    /* INPUTS: LEFT ALIGNED TEXT, WHITE LABELS */
+    .stTextInput label, .stSelectbox label, .stTextArea label {{
+        color: white !important;
+        font-weight: bold !important;
+        text-align: left !important;
+        display: block !important;
+        width: 100%;
+    }}
+    /* Force input width to fill the 480px container */
+    .stTextInput, .stSelectbox, .stTextArea {{ width: 100% !important; }}
+
+    /* BUTTONS: FULL WIDTH OF CONTAINER (480px) */
+    div.stButton > button {{
+        background-color: #faf9f9 !important;
+        color: #131419 !important;
+        border: 4px solid #fca311 !important;
+        border-radius: 20px !important;
+        width: 100% !important; /* Fills the 480px container exactly */
+        height: 70px !important;
+        font-weight: 900 !important;
+        font-size: 18px !important;
+        margin-top: 10px !important;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }}
+    div.stButton > button:hover {{
+        background-color: #a7c957 !important;
+        transform: scale(1.02);
+    }}
+    div.stButton > button p {{ font-weight: 900 !important; }}
+
+    /* ADMIN CARDS */
+    .card-box {{ display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }}
+    .card {{ 
+        background: white; 
+        padding: 15px; 
+        border-radius: 10px; 
+        text-align: center; 
+        font-weight: 900; 
+        color: #131419; 
+        min-width: 140px; 
+        flex: 1; 
+    }}
+
+</style>
+""", unsafe_allow_html=True)
+
+# ==========================================
+# 2. HELPER FUNCTIONS
+# ==========================================
 def go_to(page):
     st.session_state.page = page
     st.rerun()
@@ -120,30 +128,25 @@ def generate_ref_no(hrms_id, df_grievance):
     return f"{date_str}{hrms_id}{str(count).zfill(3)}"
 
 # ==========================================
-# 3. LAYOUT HELPERS (The "Mobile Center" Trick)
-# ==========================================
-def render_center_stage(content_func):
-    """Creates a centered 500px column on a wide canvas."""
-    # Columns: [Spacer, Content(500px), Spacer]
-    c1, c2, c3 = st.columns([1, 500, 1]) 
-    with c2:
-        content_func()
-
-# ==========================================
-# 4. PAGE LOGIC
+# 3. PAGE LOGIC
 # ==========================================
 
-def page_landing():
+# --- PAGE 1: LANDING ---
+if st.session_state.page == 'landing':
+    # 1. Logo
     if os.path.exists(LOGO_PATH): st.image(LOGO_PATH, width=LOGO_WIDTH)
+    
+    # 2. Headings (Written AFTER/BELOW Logo)
     st.markdown('<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
     st.markdown('<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
     
-    # Buttons are auto-centered by CSS (margin: auto)
+    # 3. Buttons (Will fill 480px container)
     if st.button("📝 नया Grievance दर्ज करें"): go_to('new_form')
     if st.button("🔍 ग्रीवांस की वर्तमान स्थिति जानें"): go_to('status_check')
     if st.button("🔐 Officer/ Admin Login"): go_to('login')
 
-def page_registration():
+# --- PAGE 2: REGISTRATION ---
+elif st.session_state.page == 'new_form':
     st.markdown('<div class="hindi-heading">Grievance Registration</div>', unsafe_allow_html=True)
     
     if not st.session_state.hrms_verified:
@@ -196,7 +199,8 @@ def page_registration():
         st.session_state.hrms_verified = False
         go_to('landing')
 
-def page_status():
+# --- PAGE 3: STATUS CHECK ---
+elif st.session_state.page == 'status_check':
     st.markdown('<div class="hindi-heading">Grievance Status</div>', unsafe_allow_html=True)
     ref_in = st.text_input("Enter Reference Number").strip()
     
@@ -213,7 +217,8 @@ def page_status():
     
     if st.button("🏠 Back to Home"): go_to('landing')
 
-def page_login():
+# --- PAGE 4: LOGIN ---
+elif st.session_state.page == 'login':
     st.markdown('<div class="hindi-heading">Superuser Login</div>', unsafe_allow_html=True)
     
     locked = st.session_state.super_verified
@@ -245,8 +250,8 @@ def page_login():
         st.session_state.super_verified = False
         go_to('landing')
 
-# --- ADMIN (FULL WIDTH) ---
-def page_admin():
+# --- PAGE 5: ADMIN DASHBOARD (WIDE LAYOUT) ---
+elif st.session_state.page == 'admin_dashboard':
     st.markdown('<div class="hindi-heading" style="font-size:35px;">Admin Dashboard</div>', unsafe_allow_html=True)
     st.markdown(f'<div style="text-align:center; color:#fca311; font-weight:bold; margin-bottom:20px;">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
 
@@ -255,11 +260,11 @@ def page_admin():
 
     # Oversight
     st.markdown(f"""
-    <div class="card-container">
-        <div class="card" style="background:white;">TOTAL: {len(df)}</div>
-        <div class="card" style="background:#3498db; color:white;">NEW: {len(df[df['STATUS']=='NEW'])}</div>
-        <div class="card" style="background:#f1c40f;">PROCESS: {len(df[df['STATUS']=='UNDER PROCESS'])}</div>
-        <div class="card" style="background:#2ecc71; color:white;">RESOLVED: {len(df[df['STATUS']=='RESOLVED'])}</div>
+    <div class="card-box">
+        <div class="card" style="background:white;">TOTAL<br>{len(df)}</div>
+        <div class="card" style="background:#3498db; color:white;">NEW<br>{len(df[df['STATUS']=='NEW'])}</div>
+        <div class="card" style="background:#f1c40f;">PROCESS<br>{len(df[df['STATUS']=='UNDER PROCESS'])}</div>
+        <div class="card" style="background:#2ecc71; color:white;">RESOLVED<br>{len(df[df['STATUS']=='RESOLVED'])}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -315,20 +320,11 @@ def page_admin():
         st.session_state.super_verified = False
         go_to('landing')
 
-# ==========================================
-# 5. MAIN ROUTING
-# ==========================================
-if st.session_state.page == 'landing':
-    render_center_stage(page_landing)
-elif st.session_state.page == 'new_form':
-    render_center_stage(page_registration)
-elif st.session_state.page == 'status_check':
-    render_center_stage(page_status)
-elif st.session_state.page == 'login':
-    render_center_stage(page_login)
 elif st.session_state.page == 'role_selection':
-    render_center_stage(lambda: st.write("Role Select")) # Placeholder
-elif st.session_state.page == 'admin_dashboard':
-    page_admin() # Uses Full Width, no center stage
+    st.markdown('<div class="hindi-heading">Select Dashboard</div>', unsafe_allow_html=True)
+    if st.button("🛠️ Admin Dashboard"): go_to('admin_dashboard')
+    if st.button("📋 Officer Dashboard"): go_to('officer_dashboard')
+
 elif st.session_state.page == 'officer_dashboard':
-    st.title("Officer Dashboard Placeholder")
+    st.markdown('<div class="hindi-heading">Officer Dashboard</div>', unsafe_allow_html=True)
+    if st.button("🚪 Logout"): go_to('landing')
