@@ -108,7 +108,7 @@ custom_css = f"""
         font-size: {HEADING_FONT_SIZE_HI};
         font-weight: bold;
         line-height: 1.2;
-        margin-top: 10px;
+        margin-top: 6px;
     }}
     
     .english-heading {{
