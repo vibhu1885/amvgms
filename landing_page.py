@@ -9,7 +9,7 @@ LOGO_PATH = "assets/office_logo.png"
 LOGO_WIDTH = 130 
 
 # 2. Background & Global Colors
-APP_BG_COLOR = "#121212"  
+APP_BG_COLOR = "#131419"  
 HEADING_COLOR = "#FFFFFF" 
 LABEL_COLOR = "#FFFFFF"   
 
