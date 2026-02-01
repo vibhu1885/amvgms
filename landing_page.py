@@ -181,4 +181,44 @@ elif st.session_state.page == 'login':
                 role = st.session_state.active_super['ROLE'].upper()
                 if role == "ADMIN": go_to('admin_dashboard')
                 elif role == "OFFICER": go_to('officer_dashboard')
-                elif role == "BOTH":
+                elif role == "BOTH": go_to('role_selection')
+            else: st.error("❌ Invalid Key.")
+    if st.button("🏠 Back to Home"):
+        st.session_state.super_verified = False
+        go_to('landing')
+
+# --- ADMIN DASHBOARD ---
+elif st.session_state.page == 'admin_dashboard':
+    inject_admin_css()
+    st.markdown('<div class="hindi-heading">Admin Dashboard</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="text-align:center; color:#fca311; font-weight:bold;">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
+
+    ws_g = get_sheet("GRIEVANCE")
+    df = pd.DataFrame(ws_g.get_all_records())
+    
+    # Oversights
+    st.markdown(f"""
+    <div class="card-box">
+        <div class="card" style="background:white;">Total: {len(df)}</div>
+        <div class="card" style="background:#3498db;">NEW: {len(df[df['STATUS']=='NEW'])}</div>
+        <div class="card" style="background:#f1c40f;">PROCESS: {len(df[df['STATUS']=='UNDER PROCESS'])}</div>
+        <div class="card" style="background:#2ecc71;">RESOLVED: {len(df[df['STATUS']=='RESOLVED'])}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Simplified table logic
+    for i, row in df.iterrows():
+        st.markdown("---")
+        c1, c2, c3 = st.columns([2, 5, 3])
+        with c1: st.write(f"**Ref:** {row['REFERENCE_NO']}")
+        with c2: st.write(f"**{row['EMP_NAME']}**\n{row['GRIEVANCE_TEXT']}")
+        with c3:
+            if row['STATUS'] == "NEW":
+                if st.button("Mark Under Process", key=f"mark_{i}"):
+                    ws_g.update_cell(i+2, 11, "UNDER PROCESS")
+                    st.rerun()
+            else: st.info(row['STATUS'])
+
+    if st.button("🚪 Logout"):
+        st.session_state.super_verified = False
+        go_to('landing')
