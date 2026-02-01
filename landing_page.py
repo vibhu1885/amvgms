@@ -36,30 +36,28 @@ def get_sheet(sheet_name):
 # ==========================================
 st.set_page_config(page_title="GMS Alambagh", layout="wide")
 
-# Determine Container Width
+# Container Width: 1200px for Admin, 480px for others
 container_max_width = "1200px" if st.session_state.page == 'admin_dashboard' else "480px"
 
 st.markdown(f"""
 <style>
-    /* HIDE DEFAULT HEADER/FOOTER */
+    /* HIDE HEADER/FOOTER */
     header, footer, [data-testid="stHeader"] {{ visibility: hidden; height: 0; }}
     .stApp {{ background-color: {APP_BG_COLOR}; }}
 
-    /* 1. MAIN CONTAINER LOCK */
+    /* 1. MAIN CONTAINER */
     .block-container {{
         max-width: {container_max_width} !important;
         padding-top: 2rem !important;
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
         margin: 0 auto !important;
     }}
 
-    /* 2. LOGO ALIGNMENT */
+    /* 2. LOGO */
     [data-testid="stImage"] {{ display: flex; justify-content: center; width: 100%; margin-bottom: 15px; }}
     [data-testid="stImage"] img {{ margin: 0 auto; }}
 
     /* 3. HEADINGS */
-    .hindi-heading {{ text-align: center; color: white; font-weight: 900; font-size: 22px; margin-bottom: 5px; width: 100%; }}
+    .hindi-heading {{ text-align: center; color: white; font-weight: 900; font-size: 22px; width: 100%; }}
     .english-heading {{ text-align: center; color: white; font-weight: bold; font-size: 18px; margin-bottom: 30px; width: 100%; }}
     .welcome-msg {{ text-align: center; color: #fca311; font-weight: 900; font-size: 24px; margin-bottom: 25px; width: 100%; }}
 
@@ -69,7 +67,7 @@ st.markdown(f"""
     }}
     .stTextInput, .stSelectbox, .stTextArea {{ width: 100% !important; }}
 
-    /* 5. STANDARD BUTTONS (Strict 300px) */
+    /* 5. BUTTONS (300px Fixed) */
     div.stButton > button {{
         background-color: #faf9f9;
         color: #131419;
@@ -84,26 +82,18 @@ st.markdown(f"""
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }}
     
-    /* 6. ADMIN SCORECARDS (HTML/CSS) */
-    .score-container {{
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-    }}
+    /* 6. ADMIN SCORECARDS */
+    .score-container {{ display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }}
     .score-card {{
-        flex: 1;
-        min-width: 120px;
-        padding: 15px;
-        border-radius: 12px;
-        text-align: center;
-        color: #131419;
-        font-weight: 900;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        flex: 1; min-width: 150px; padding: 15px; border-radius: 12px; text-align: center;
+        color: #131419; font-weight: 900; box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     }}
     .score-number {{ font-size: 28px; line-height: 1.2; }}
     .score-label {{ font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }}
+
+    /* 7. ADMIN TABLE ROW STYLING */
+    .detail-label {{ color: #fca311; font-weight: bold; font-size: 14px; }}
+    .detail-val {{ color: white; font-weight: normal; font-size: 14px; margin-bottom: 5px; }}
 
 </style>
 """, unsafe_allow_html=True)
@@ -143,8 +133,7 @@ elif st.session_state.page == 'new_form':
     if not st.session_state.hrms_verified:
         hrms_in = st.text_input("Enter HRMS ID (HRMS आईडी)*", max_chars=6).upper().strip()
         if st.button("🔎 Verify ID"):
-            if not hrms_in:
-                 st.warning("⚠️ Please enter HRMS ID.")
+            if not hrms_in: st.warning("⚠️ Enter HRMS ID.")
             else:
                 try:
                     df = pd.DataFrame(get_sheet("EMPLOYEE_MAPPING").get_all_records())
@@ -198,8 +187,7 @@ elif st.session_state.page == 'status_check':
     ref_in = st.text_input("Enter Reference Number").strip()
     
     if st.button("🔍 Check Status"):
-        if not ref_in:
-            st.warning("⚠️ Enter Reference Number.")
+        if not ref_in: st.warning("⚠️ Enter Reference Number.")
         else:
             try:
                 df = pd.DataFrame(get_sheet("GRIEVANCE").get_all_records())
@@ -234,8 +222,7 @@ elif st.session_state.page == 'login':
                             st.session_state.super_verified = True
                             st.rerun()
                         else: st.error("❌ User not found.")
-                    except: 
-                        st.error("Connection Error.")
+                    except: st.error("Connection Error.")
     else:
         st.success(f"✅ {st.session_state.active_super['NAME']}")
         key = st.text_input("Password", type="password")
@@ -259,7 +246,7 @@ elif st.session_state.page == 'admin_dashboard':
     ws_g = get_sheet("GRIEVANCE")
     df = pd.DataFrame(ws_g.get_all_records())
 
-    # --- HTML SCORECARDS (The Color Fix) ---
+    # --- SCORECARDS ---
     count_total = len(df)
     count_new = len(df[df['STATUS']=='NEW'])
     count_process = len(df[df['STATUS']=='UNDER PROCESS'])
@@ -273,7 +260,7 @@ elif st.session_state.page == 'admin_dashboard':
         </div>
         <div class="score-card" style="background-color: #f1c40f;">
             <div class="score-number">{count_process}</div>
-            <div class="score-label">PROCESS</div>
+            <div class="score-label">UNDER PROCESS</div>
         </div>
         <div class="score-card" style="background-color: #2ecc71; color: white;">
             <div class="score-number">{count_resolved}</div>
@@ -286,23 +273,17 @@ elif st.session_state.page == 'admin_dashboard':
     </div>
     """, unsafe_allow_html=True)
 
-    # --- FILTER CONTROL ---
-    st.write("### 🔽 Filter Grievances")
+    # --- FILTER ---
+    st.write("### 🔽 Filter Data")
     filter_choice = st.radio(
-        "Select Status:", 
+        "View Status:", 
         options=["ALL", "NEW", "UNDER PROCESS", "RESOLVED"],
-        horizontal=True,
-        index=0 if st.session_state.admin_filter == 'ALL' else 
-              1 if st.session_state.admin_filter == 'NEW' else
-              2 if st.session_state.admin_filter == 'UNDER PROCESS' else 3
+        horizontal=True
     )
-    # Sync visual filter with session state
-    st.session_state.admin_filter = filter_choice
-
-    # Apply Filter
+    
     f_df = df.copy()
-    if st.session_state.admin_filter != 'ALL':
-        f_df = f_df[f_df['STATUS'] == st.session_state.admin_filter]
+    if filter_choice != 'ALL':
+        f_df = f_df[f_df['STATUS'] == filter_choice]
 
     # --- ACTION TABLE ---
     off_df = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
@@ -314,37 +295,62 @@ elif st.session_state.page == 'admin_dashboard':
         st.info("No records found.")
     else:
         for i, row in f_df.iterrows():
-            ac1, ac2, ac3 = st.columns([1.5, 5, 2.5])
-            
-            with ac1:
+            with st.container():
+                # HEADER ROW
+                c_h1, c_h2, c_h3 = st.columns([2, 4, 2])
                 color = "#3498db" if row['STATUS'] == "NEW" else "#f1c40f" if row['STATUS'] == "UNDER PROCESS" else "#2ecc71"
-                st.write(f"**Ref:** {row['REFERENCE_NO']}")
-                st.markdown(f"<span style='color:{color}; font-weight:900;'>{row['STATUS']}</span>", unsafe_allow_html=True)
+                c_h1.markdown(f"**Ref:** `{row['REFERENCE_NO']}`")
+                c_h2.markdown(f"**Status:** <span style='color:{color}; font-weight:bold;'>{row['STATUS']}</span>", unsafe_allow_html=True)
+                c_h3.markdown(f"📅 {row['DATE_TIME']}")
                 
-            with ac2:
-                st.write(f"**{row['EMP_NAME']}** | {row['SECTION']}")
-                st.caption(f"{row['GRIEVANCE_TEXT']}")
+                # DETAILS
+                d1, d2, d3 = st.columns([3, 3, 3])
+                with d1:
+                    st.markdown(f"<span class='detail-label'>Name:</span> <span class='detail-val'>{row['EMP_NAME']}</span>", unsafe_allow_html=True)
+                    st.markdown(f"<span class='detail-label'>HRMS:</span> <span class='detail-val'>{row['HRMS_ID']}</span>", unsafe_allow_html=True)
+                    st.markdown(f"<span class='detail-label'>Emp No:</span> <span class='detail-val'>{row['EMP_NO']}</span>", unsafe_allow_html=True)
+
+                with d2:
+                    st.markdown(f"<span class='detail-label'>Designation:</span> <span class='detail-val'>{row['DESIGNATION']}</span>", unsafe_allow_html=True)
+                    st.markdown(f"<span class='detail-label'>Trade:</span> <span class='detail-val'>{row['TRADE']}</span>", unsafe_allow_html=True)
+                    st.markdown(f"<span class='detail-label'>Section:</span> <span class='detail-val'>{row['SECTION']}</span>", unsafe_allow_html=True)
                 
-            with ac3:
+                with d3:
+                    st.markdown(f"<span class='detail-label'>Grievance Type:</span> <span class='detail-val'>{row['GRIEVANCE_TYPE']}</span>", unsafe_allow_html=True)
+
+                # DESCRIPTION
+                st.markdown(f"<span class='detail-label'>Description:</span>", unsafe_allow_html=True)
+                st.info(f"{row['GRIEVANCE_TEXT']}")
+
+                # ACTION / DISPLAY LOGIC
                 if row['STATUS'] == "NEW":
-                    sel = st.selectbox("Assign", officers, key=f"adm_{i}")
+                    act_col, _ = st.columns([4, 4])
+                    sel = act_col.selectbox("Assign To:", officers, key=f"adm_{i}")
                     if sel != "Select Officer":
                         now = datetime.now().strftime("%d-%m-%Y %H:%M")
                         try:
+                            # 1. Update Sheet: Col 12 = Name Only, Col 13 = Time
                             cell = ws_g.find(str(row['REFERENCE_NO']))
                             ws_g.update_cell(cell.row, 11, "UNDER PROCESS")
-                            ws_g.update_cell(cell.row, 12, f"Marked to: {sel} at {now}")
+                            ws_g.update_cell(cell.row, 12, sel) # Save "Name (Rank)" only
+                            ws_g.update_cell(cell.row, 13, f"Assigned on {now}") # Save Time separately
                             st.success("Assigned!")
                             time.sleep(0.5)
                             st.rerun()
                         except: st.error("Update Failed")
                 else:
-                    st.info(f"📍 {row['MARKED_OFFICER']}")
-            st.markdown("---")
+                    # Display the Separated Data
+                    st.markdown(f"""
+                    <div style="background-color: #2c2e3a; padding: 10px; border-radius: 8px;">
+                        <span style="color: #fca311; font-weight: bold;">Assigned To:</span> <span style="color: white;">{row['MARKED_OFFICER']}</span><br>
+                        <span style="color: #fca311; font-weight: bold;">Time:</span> <span style="color: #aaa;">{row['OFFICER_REMARK']}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                st.markdown("---")
 
     if st.button("🚪 Logout"):
         st.session_state.super_verified = False
-        st.session_state.admin_filter = 'ALL' 
         go_to('landing')
 
 elif st.session_state.page == 'role_selection':
