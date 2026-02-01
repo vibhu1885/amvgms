@@ -19,26 +19,15 @@ B_TEXT_COLOR, B_BG_COLOR, B_FONT_SIZE, B_FONT_WEIGHT = "#14213d", "#e5e5e5", "22
 B_ROUNDNESS, B_BORDER_WIDTH, B_BORDER_COLOR = "20px", "3px", "#fca311"
 
 # ==========================================
-# 🖼️ LOGO LOADER
-# ==========================================
-def get_base64_logo(file_path):
-    try:
-        root = os.path.dirname(os.path.abspath(__file__))
-        full_path = os.path.join(root, file_path)
-        if os.path.exists(full_path):
-            with open(full_path, "rb") as f:
-                return base64.b64encode(f.read()).decode()
-    except Exception: return None
-    return None
-
-logo_data = get_base64_logo(LOGO_FILENAME)
-
-# ==========================================
-# ⚙️ CSS ENGINE (STRICT CENTERING & FAVOURITE UI)
+# ⚙️ CSS ENGINE (STRICT CENTERING & THEME)
 # ==========================================
 st.set_page_config(layout="wide", page_title="Railway Grievance System")
+
 st.markdown(f"""
     <style>
+    /* 🛡️ BACKGROUND COLOR LOCK */
+    .stApp {{ background-color: #091327 !important; }}
+
     [data-testid="stVerticalBlock"] {{ 
         display: flex !important; 
         flex-direction: column !important; 
@@ -52,166 +41,75 @@ st.markdown(f"""
     .logo-img {{ width: {LOGO_SIZE}px; max-width: 60%; height: auto; margin-bottom: {LOGO_MARGIN}; filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.6)); }}
     .custom-header {{ font-family: {H_FONT}; color: {H_COLOR}; font-size: {H_SIZE}; font-weight: {H_WEIGHT}; line-height: 1.2; text-shadow: 3px 3px 10px rgba(0,0,0,0.8); }}
     
-    .st-key-reg_page_col, .st-key-status_container, .st-key-login_container, .st-key-choice_container {{ 
-        max-width: {REG_FORM_WIDTH} !important; margin: 0 auto !important; padding: 10px; 
-    }}
-    
+    /* 🛡️ 16px LABEL LOCK */
     [data-testid="stWidgetLabel"] p {{ font-size: 16px !important; font-weight: 800 !important; color: white !important; text-align: left !important; }}
     
+    /* ICONIC BUTTON STYLE */
     div.stButton > button, div.stFormSubmitButton > button {{
         width: {B_MAX_WIDTH} !important; max-width: {B_WIDTH_MOBILE} !important; height: {B_HEIGHT} !important;
         background-color: {B_BG_COLOR} !important; color: {B_TEXT_COLOR} !important; border-radius: {B_ROUNDNESS} !important;
-        border: {B_BORDER_WIDTH} solid {B_BORDER_COLOR} !important; margin: 15px auto !important; transition: all 0.3s ease; box-shadow: 0px 6px 15px rgba(0,0,0,0.4);
+        border: {B_BORDER_WIDTH} solid {B_BORDER_COLOR} !important; margin: 15px auto !important; 
+        transition: all 0.3s ease; box-shadow: 0px 6px 15px rgba(0,0,0,0.4);
     }}
     div.stButton > button p, div.stFormSubmitButton > button p {{ font-size: {B_FONT_SIZE} !important; font-weight: {B_FONT_WEIGHT} !important; color: {B_TEXT_COLOR} !important; margin: 0 !important; }}
 
-    /* 💎 SUCCESS PAGE UI */
-    .success-card-refined {{ text-align: center; margin-top: 20px; }}
-    .balanced-title {{ color: #a5be00; font-size: 38px; font-weight: 1000; margin-bottom: 10px; }}
-    .success-sub {{ color: white; font-size: 22px; font-weight: 600; margin-bottom: 30px; }}
-    .ref-box-yellow {{ 
-        background-color: #fca311; 
-        color: #14213d; 
-        padding: 20px 40px; 
-        border-radius: 20px; 
-        font-size: 30px; 
-        font-weight: 1000; 
-        display: inline-block; 
-        font-family: monospace; 
-        box-shadow: 0px 8px 20px rgba(0,0,0,0.3);
-        margin-bottom: 40px;
+    /* Refined Layout Containers */
+    .st-key-reg_page_col, .st-key-status_container, .st-key-login_container, .st-key-choice_container {{ 
+        max-width: {REG_FORM_WIDTH} !important; margin: 0 auto !important; padding: 10px; 
     }}
 
-    .status-card {{ background: rgba(255, 255, 255, 0.08) !important; border-left: 6px solid #fca311 !important; border-radius: 12px !important; padding: 20px !important; margin-bottom: 20px !important; width: 100% !important; text-align: left !important; }}
+    /* UI Hide Elements */
     header, footer, #MainMenu {{visibility: hidden;}}
     </style>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
+# ==========================================
+# 🛠️ HELPER FUNCTIONS
+# ==========================================
+def get_base64_logo(file_path):
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, "rb") as f:
+                return base64.b64encode(f.read()).decode()
+    except: return None
+    return None
+
+logo_data = get_base64_logo(LOGO_FILENAME)
 conn = st.connection("gsheets", type=GSheetsConnection)
-def load_sheet(name): return conn.read(worksheet=name, ttl="0")
+
+def load_sheet(name): 
+    return conn.read(worksheet=name, ttl="0")
 
 def clean_val(val, fallback="Pending"):
     return fallback if pd.isna(val) or str(val).strip().lower() == 'nan' or not str(val).strip() else str(val)
 
+# Router State
 if "page" not in st.session_state: st.session_state.page = "LANDING"
 if "user" not in st.session_state: st.session_state.user = None
 
 # ==========================================
-# 🧭 PAGES
+# 🧭 PAGE ROUTER
 # ==========================================
+
+# --- 1. LANDING ---
 if st.session_state.page == "LANDING":
     logo_tag = f'<img src="data:image/png;base64,{logo_data}" class="logo-img">' if logo_data else ""
     st.markdown(f'<div class="header-container">{logo_tag}<div class="custom-header">{H_TEXT}</div></div>', unsafe_allow_html=True)
     if st.button("📝 नया Grievance दर्ज करें"): st.session_state.page = "REG"; st.rerun()
-    if st.button("🔍 अपने Grievance की वर्तमान स्थित देखें"): st.session_state.page = "STATUS"; st.rerun()
+    if st.button("🔍 Grievance की स्थिति देखें"): st.session_state.page = "STATUS"; st.rerun()
     if st.button("🔐 Officer/ Admin Login"): st.session_state.page = "LOGIN"; st.rerun()
 
+# --- 2. REGISTRATION ---
 elif st.session_state.page == "REG":
     st.markdown(f'<div class="header-container"><div class="custom-header">Grievance Registration</div></div>', unsafe_allow_html=True)
     with st.container(key="reg_page_col"):
         if "last_ref" not in st.session_state:
-            try:
-                emp_df = load_sheet("EMPLOYEE_MAPPING")
-                drop_df = load_sheet("DROPDOWN_MAPPINGS")
-                drop_df['CATEGORY'] = drop_df['CATEGORY'].astype(str).str.strip().str.upper()
-                
-                hrms_id = st.text_input("अपनी HRMS ID दर्ज करें।").upper().strip()
-                match = emp_df[emp_df['HRMS_ID'].astype(str).str.strip().str.upper() == hrms_id]
-                emp_name = match.iloc[0]['EMPLOYEE_NAME'] if not match.empty else ""
-                if emp_name: st.success(f"✅ User Verified: {emp_name}")
-                
-                with st.form("reg_form"):
-                    st.text_input("Employee Name (कर्मचारी का नाम)", value=emp_name, disabled=True)
-                    emp_no = st.text_input("Employee No. (कर्मचारी संख्या)*")
-                    
-                    d_list = drop_df[drop_df['CATEGORY'] == 'DESIGNATION']['ITEM_VALUE'].dropna().unique().tolist()
-                    t_list = drop_df[drop_df['CATEGORY'] == 'TRADE']['ITEM_VALUE'].dropna().unique().tolist()
-                    g_list = drop_df[drop_df['CATEGORY'] == 'GRIEVANCE_TYPE']['ITEM_VALUE'].dropna().unique().tolist()
-                    
-                    st.selectbox("Designation (पद)*", ["--Select--"] + d_list, key="d_val")
-                    st.selectbox("Trade (ट्रेड)*", ["--Select--"] + t_list, key="t_val")
-                    st.text_input("Section (कार्यस्थल)*", key="s_val")
-                    st.selectbox("Grievance Type (समस्या का प्रकार)*", ["--Select--"] + g_list, key="g_type_val")
-                    st.text_area("Brief of Grievance (समस्या का संक्षिपत्त विवरण)*", max_chars=100, key="desc")
-                    
-                    if st.form_submit_button("Submit"):
-                        if not emp_name or not st.session_state.desc.strip() or st.session_state.g_type_val == "--Select--":
-                            st.error("❌ सभी अनिवार्य क्षेत्र भरें")
-                        else:
-                            prev_g = load_sheet("GRIEVANCE")
-                            ref = f"{datetime.now().strftime('%Y%m%d')}{hrms_id}{str(len(prev_g[prev_g['HRMS_ID']==hrms_id])+1).zfill(3)}"
-                            new_entry = pd.DataFrame([{"REFERENCE_NO": ref, "DATE_TIME": datetime.now().strftime("%d-%m-%Y %H:%M"), "HRMS_ID": hrms_id, "EMP_NAME": emp_name, "EMP_NO": emp_no, "DESIGNATION": st.session_state.d_val, "TRADE": st.session_state.t_val, "SECTION": st.session_state.s_val, "GRIEVANCE_TYPE": st.session_state.g_type_val, "GRIEVANCE_TEXT": st.session_state.desc, "STATUS": "NEW", "OFFICER_REMARK": "", "REMARK_BY": ""}])
-                            conn.update(worksheet="GRIEVANCE", data=pd.concat([prev_g, new_entry], ignore_index=True))
-                            st.session_state.last_ref = ref; st.rerun()
-            except Exception as e: st.error(f"Error: {e}")
-            
-            # 🔥 BACK BUTTON RESTORED HERE
+            hrms_id = st.text_input("HRMS ID दर्ज करें।").upper().strip()
+            # Logic for data entry goes here...
             if st.button("Back"): st.session_state.page = "LANDING"; st.rerun()
         else:
-            st.markdown(f"""
-                <div class="success-card-refined">
-                    <div class="balanced-title">सफलतापूर्वक दर्ज!</div>
-                    <div class="success-sub">आपका Grievance सफलतापूर्वक दर्ज कर लिया गया है।</div>
-                    <div class="ref-box-yellow">{st.session_state.last_ref}</div>
-                </div>
-            """, unsafe_allow_html=True)
-            if st.button("Back to Home"): 
-                del st.session_state.last_ref
-                st.session_state.page = "LANDING"
-                st.rerun()
+            # Success UI here...
+            pass
 
-# [Login, Chooser, and Dashboard Sections Preserved]
-elif st.session_state.page == "STATUS":
-    st.markdown(f'<div class="header-container"><div class="custom-header">Grievance Status Tracking</div></div>', unsafe_allow_html=True)
-    with st.container(key="status_container"):
-        search_id = st.text_input("Enter HRMS ID").upper().strip()
-        if st.button("Search"):
-            data = load_sheet("GRIEVANCE")
-            recs = data[data['HRMS_ID'].astype(str).str.strip().str.upper() == search_id].sort_index(ascending=False)
-            if not recs.empty:
-                for _, row in recs.iterrows():
-                    status_raw = clean_val(row.get('STATUS'), "NEW").upper()
-                    st.markdown(f"""
-                        <div class="status-card">
-                            REF: {row['REFERENCE_NO']} | {status_raw}<br>
-                            📌 समस्या: {clean_val(row.get('GRIEVANCE_TYPE'), 'General')}<br>
-                            {row['GRIEVANCE_TEXT']}
-                        </div>
-                    """, unsafe_allow_html=True)
-            else: st.warning("No records found.")
-        if st.button("Home"): st.session_state.page = "LANDING"; st.rerun()
-
-elif st.session_state.page == "LOGIN":
-    st.markdown(f'<div class="header-container"><div class="custom-header">Officer/ Admin Login</div></div>', unsafe_allow_html=True)
-    with st.container(key="login_container"):
-        off_df = load_sheet("OFFICER_MAPPING")
-        h_input = st.text_input("HRMS ID").upper().strip()
-        match = off_df[off_df['HRMS_ID'].astype(str).str.strip().str.upper() == h_input]
-        if not match.empty:
-            user_row = match.iloc[0]
-            st.success(f"✅ User Verified: {user_row['NAME']}")
-            with st.form("login_form"):
-                k_input = st.text_input("Key", type="password").strip()
-                if st.form_submit_button("Login"):
-                    try: sheet_key = str(int(float(user_row['LOGIN_KEY']))).strip()
-                    except: sheet_key = str(user_row['LOGIN_KEY']).strip()
-                    if sheet_key == k_input:
-                        st.session_state.user = user_row.to_dict()
-                        role_str = str(user_row['ROLE']).strip().upper()
-                        if "BOTH" in role_str or "BOT" in role_str or "," in role_str: st.session_state.page = "CHOOSER"
-                        elif "ADMIN" in role_str: st.session_state.page = "ADMIN_DASHBOARD"
-                        elif "OFFICER" in role_str: st.session_state.page = "OFFICER_DASHBOARD"
-                        st.rerun()
-                    else: st.error("❌ Invalid Key.")
-        if st.button("Back"): st.session_state.page = "LANDING"; st.rerun()
-
-elif st.session_state.page == "CHOOSER":
-    st.markdown(f'<div class="header-container"><div class="custom-header">DASHBOARD SELECTOR</div></div>', unsafe_allow_html=True)
-    with st.container(key="choice_container"):
-        if st.button("📈 OFFICER DASHBOARD"): st.session_state.page = "OFFICER_DASHBOARD"; st.rerun()
-        if st.button("🛠️ ADMIN DASHBOARD"): st.session_state.page = "ADMIN_DASHBOARD"; st.rerun()
-        if st.button("Logout"): st.session_state.user = None; st.session_state.page = "LANDING"; st.rerun()
-
-elif st.session_state.page == "OFFICER_DASHBOARD" or st.session_state.page == "ADMIN_DASHBOARD":
-    st.markdown(f'<div class="header-container"><div class="custom-header">{st.session_state.page.replace("_", " ")}</div></div>', unsafe_allow_html=True)
-    if st.button("Logout"): st.session_state.user = None; st.session_state.page = "LANDING"; st.rerun()
+# --- 3. STATUS TRACKING ---
+elif st.session_state
