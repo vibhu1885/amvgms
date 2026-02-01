@@ -28,7 +28,7 @@ BTN_TEXT_SIZE = "17px"
 BTN_FONT_WEIGHT = "900"    
 
 # 4. Label & Text Controls
-LABEL_FONT_SIZE = "18px"
+LABEL_FONT_SIZE = "20px"
 HEADING_FONT_SIZE_HI = "26px" 
 HEADING_FONT_SIZE_EN = "20px"
 
