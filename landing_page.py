@@ -1,4 +1,4 @@
-traimport streamlit as st
+import streamlit as st
 import os
 
 # ==========================================
@@ -106,7 +106,7 @@ custom_css = f"""
     .hindi-heading {{
         color: {HEADING_COLOR};
         font-size: 20px;
-        font-weight: bold;
+        font-weight: 900;
         margin-top: 0px;
     }}
     
