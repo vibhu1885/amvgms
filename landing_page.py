@@ -49,7 +49,7 @@ def get_sheet(sheet_name):
 st.set_page_config(page_title="GMS Alambagh", layout="wide")
 
 is_dashboard = st.session_state.page in ['admin_dashboard', 'officer_dashboard']
-container_max_width = "1200px" if is_dashboard else "480px"
+container_max_width = "1200px" if is_dashboard else "500px"
 
 st.markdown(f"""
 <style>
