@@ -23,7 +23,7 @@ BTN_BORDER_WIDTH = "2px"
 BTN_ROUNDNESS = "25px"
 BTN_HOVER_COLOR = "#a7c957"
 BTN_TEXT_SIZE = "28px"
-BTN_FONT_WEIGHT = 900
+BTN_FONT_WEIGHT = "Extra-Bold"
 
 # 4. Label & Text Controls
 LABEL_FONT_SIZE = "18px"
