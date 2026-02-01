@@ -293,4 +293,32 @@ def show_admin():
                     now = datetime.now().strftime("%d-%m-%Y %H:%M")
                     # Update Cells: Columns 11 (Status) and 12 (Remark/Marked)
                     # Note: Row index in GSheets is i + 2 (1-based + header)
-                    # BUT 'i' here is from filtered df
+                    # BUT 'i' here is from filtered df, so we must find real index. 
+                    # For simplicity in this snippets, we assume standard order or direct access.
+                    # Ideally: Use Unique Ref ID to find row.
+                    cell = ws_g.find(str(row['REFERENCE_NO']))
+                    ws_g.update_cell(cell.row, 11, "UNDER PROCESS")
+                    ws_g.update_cell(cell.row, 12, f"Marked to: {sel} at {now}")
+                    st.success("Assigned!")
+                    st.rerun()
+            else:
+                st.info(f"📍 {row['MARKED_OFFICER']}")
+        st.markdown("---")
+
+    if st.button("🚪 Logout"):
+        st.session_state.super_verified = False
+        go_to('landing')
+
+# ==========================================
+# 4. MAIN EXECUTION
+# ==========================================
+if st.session_state.page == 'landing': show_landing()
+elif st.session_state.page == 'new_form': show_registration()
+elif st.session_state.page == 'status_check': show_status()
+elif st.session_state.page == 'login': show_login()
+elif st.session_state.page == 'admin_dashboard': show_admin()
+elif st.session_state.page == 'role_selection':
+    inject_css("narrow")
+    st.markdown('<div class="hindi-heading">Select Dashboard</div>', unsafe_allow_html=True)
+    if st.button("🛠️ Admin Dashboard"): go_to('admin_dashboard')
+    if st.button("📋 Officer Dashboard"): go_to('officer_dashboard')
