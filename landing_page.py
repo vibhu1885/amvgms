@@ -36,7 +36,6 @@ def get_sheet(sheet_name):
 # ==========================================
 st.set_page_config(page_title="GMS Alambagh", layout="wide")
 
-# Container Width: 1200px for Admin, 480px for others
 container_max_width = "1200px" if st.session_state.page == 'admin_dashboard' else "480px"
 
 st.markdown(f"""
@@ -322,31 +321,44 @@ elif st.session_state.page == 'admin_dashboard':
                 st.markdown(f"<span class='detail-label'>Description:</span>", unsafe_allow_html=True)
                 st.info(f"{row['GRIEVANCE_TEXT']}")
 
-                # ACTION / DISPLAY LOGIC
+                # ACTION LOGIC
                 if row['STATUS'] == "NEW":
                     act_col, _ = st.columns([4, 4])
                     sel = act_col.selectbox("Assign To:", officers, key=f"adm_{i}")
                     if sel != "Select Officer":
                         now = datetime.now().strftime("%d-%m-%Y %H:%M")
                         try:
-                            # 1. SAVE PURE DATA: "Name (Rank) at Time"
-                            # NO "Marked to:" prefix.
-                            combined_text = f"{sel} at {now}"
-                            
+                            # 1. Update Sheet: 
+                            # Col 12 (MARKED_OFFICER) = Name Only
+                            # Col 13 (ASSIGN_DATE) = Date Time
                             cell = ws_g.find(str(row['REFERENCE_NO']))
                             ws_g.update_cell(cell.row, 11, "UNDER PROCESS")
-                            ws_g.update_cell(cell.row, 12, combined_text)
-                            
+                            ws_g.update_cell(cell.row, 12, sel) # Just the name
+                            ws_g.update_cell(cell.row, 13, now) # Just the date
                             st.success("Assigned!")
                             time.sleep(0.5)
                             st.rerun()
                         except: st.error("Update Failed")
                 else:
-                    # CLEAN DISPLAY: Prepend "Assigned To:" only here in the UI
+                    # CLEAN DISPLAY: Manually constructing the label "Assigned To: [Name], Assign Date: [Time]"
+                    # Because now the DB stores them separately.
+                    # Note: We read from 'MARKED_OFFICER' (Name) and 'OFFICER_REMARK' (which we reused for Date)
+                    # Ideally, rename columns in sheet. Here we assume Col 13 maps to OFFICER_REMARK in `get_all_records` keys
+                    # If column header in sheet is "ASSIGN_DATE", update key below. 
+                    # Assuming default key 'OFFICER_REMARK' refers to Col 13.
+                    
+                    # NOTE: Ensure your Google Sheet Column 13 header is named correctly. 
+                    # If it is named "ASSIGN_DATE", use row['ASSIGN_DATE']. 
+                    # I will use row.get('ASSIGN_DATE', row.get('OFFICER_REMARK')) to be safe.
+                    
+                    assign_date = row.get('ASSIGN_DATE', row.get('OFFICER_REMARK', 'N/A'))
+                    
                     st.markdown(f"""
                     <div style="background-color: #2c2e3a; padding: 10px; border-radius: 8px; border: 1px solid #444;">
                         <span style="color: #fca311; font-weight: bold;">Assigned To:</span> 
-                        <span style="color: white;">{row['MARKED_OFFICER']}</span>
+                        <span style="color: white; font-weight: bold;">{row['MARKED_OFFICER']}</span>
+                        <span style="color: #fca311; font-weight: bold; margin-left: 15px;">Assign Date:</span> 
+                        <span style="color: white;">{assign_date}</span>
                     </div>
                     """, unsafe_allow_html=True)
                 
