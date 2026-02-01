@@ -102,7 +102,7 @@ st.markdown(f"""
     }}
     div.stButton > button p {{ 
         font-weight: 900 !important; 
-        font-size: 15px !important;
+        font-size: 17px !important;
         margin: 0 !important; 
     }}
     
