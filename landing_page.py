@@ -182,11 +182,11 @@ if st.session_state.page == 'landing':
 
 # --- PAGE 2: REGISTRATION ---
 elif st.session_state.page == 'new_form':
-    st.markdown('<div class="hindi-heading">Grievance Registration</div>', unsafe_allow_html=True)
+    st.markdown('<div class="english-heading">Grievance Registration</div>', unsafe_allow_html=True)
     
     if not st.session_state.hrms_verified:
-        hrms_in = st.text_input("Enter HRMS ID (HRMS आईडी)*", max_chars=6).upper().strip()
-        if st.button("🔎 Verify ID"):
+        hrms_in = st.text_input("Enter your HRMS ID (अपनी HRMS आईडी दर्ज करें)*", max_chars=6).upper().strip()
+        if st.button("🔎 Verify User"):
             if not hrms_in: st.warning("⚠️ Enter HRMS ID.")
             else:
                 try:
@@ -200,7 +200,7 @@ elif st.session_state.page == 'new_form':
                     else: st.error("❌ HRMS ID not found.")
                 except Exception as e: st.error(f"Error: {e}")
     else:
-        st.success(f"✅ Verified: {st.session_state.found_emp_name}")
+        st.success(f"✅ HRMS ID Verified: {st.session_state.found_emp_name}")
         
         try:
             dd_df = pd.DataFrame(get_sheet("DROPDOWN_MAPPINGS").get_all_records())
