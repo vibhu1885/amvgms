@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import time
 import pytz
+import textwrap # Added to fix the HTML indentation issue
 from datetime import datetime
 from google.oauth2.service_account import Credentials
 import gspread
@@ -24,12 +25,10 @@ if 'officer_filter' not in st.session_state: st.session_state.officer_filter = '
 
 # --- TIMEZONE HELPER ---
 def get_ist_time():
-    """Returns current time in Indian Standard Time."""
     IST = pytz.timezone('Asia/Kolkata')
     return datetime.now(IST).strftime("%d-%m-%Y %H:%M")
 
 def get_ist_date_str():
-    """Returns YYYYMMDD in IST for Ref No generation."""
     IST = pytz.timezone('Asia/Kolkata')
     return datetime.now(IST).strftime("%Y%m%d")
 
@@ -49,7 +48,6 @@ def get_sheet(sheet_name):
 # ==========================================
 st.set_page_config(page_title="GMS Alambagh", layout="wide")
 
-# Container Logic
 is_dashboard = st.session_state.page in ['admin_dashboard', 'officer_dashboard']
 container_max_width = "1200px" if is_dashboard else "480px"
 
@@ -66,22 +64,20 @@ st.markdown(f"""
         margin: 0 auto !important;
     }}
 
-    /* 2. LOGO */
+    /* 2. LOGO & HEADINGS */
     [data-testid="stImage"] {{ display: flex; justify-content: center; width: 100%; margin-bottom: 15px; }}
     [data-testid="stImage"] img {{ margin: 0 auto; }}
-
-    /* 3. HEADINGS */
     .hindi-heading {{ text-align: center; color: white; font-weight: 900; font-size: 22px; width: 100%; }}
     .english-heading {{ text-align: center; color: white; font-weight: bold; font-size: 18px; margin-bottom: 30px; width: 100%; }}
     .welcome-msg {{ text-align: center; color: #fca311; font-weight: 900; font-size: 24px; margin-bottom: 25px; width: 100%; }}
 
-    /* 4. INPUTS */
+    /* 3. INPUTS */
     .stTextInput label, .stSelectbox label, .stTextArea label {{
         color: white !important; font-weight: bold !important; text-align: left !important; display: block !important; width: 100%;
     }}
     .stTextInput, .stSelectbox, .stTextArea {{ width: 100% !important; }}
 
-    /* 5. BUTTONS (300px Fixed) */
+    /* 4. BUTTONS */
     div.stButton > button {{
         background-color: #faf9f9 !important;
         color: #131419 !important;
@@ -91,15 +87,11 @@ st.markdown(f"""
         height: 70px !important;
         font-weight: 900 !important;
         font-size: 20px !important;
-        letter-spacing: 0.5px !important;
         margin: 10px auto !important; 
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+        display: block !important;
         box-shadow: 0 5px 15px rgba(0,0,0,0.3) !important;
         transition: all 0.3s ease-in-out !important;
     }}
-    
     div.stButton > button:hover {{
         background-color: #a7c957 !important;
         color: #fff !important;
@@ -107,13 +99,7 @@ st.markdown(f"""
         transform: translateY(-4px) scale(1.02) !important;
     }}
     
-    div.stButton > button p {{ 
-        font-weight: 900 !important; 
-        font-size: 20px !important;
-        margin: 0 !important; 
-    }}
-    
-    /* 6. SCORECARDS (DASHBOARDS) */
+    /* 5. SCORECARDS */
     .score-container {{ display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }}
     .score-card {{
         flex: 1; min-width: 150px; padding: 15px; border-radius: 12px; text-align: center;
@@ -122,31 +108,33 @@ st.markdown(f"""
     .score-number {{ font-size: 28px; line-height: 1.2; }}
     .score-label {{ font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }}
 
-    /* 7. NEW GRIEVANCE CARD STYLE */
+    /* 6. STATUS CARD STYLE (FIXED) */
     .g-card {{
         background-color: white;
-        border-radius: 10px;
-        padding: 15px;
+        border-radius: 12px;
+        padding: 20px;
         margin-bottom: 20px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        border-left: 6px solid #ccc; /* Default Border */
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        border-left: 8px solid #ccc;
+        font-family: sans-serif;
     }}
-    .g-ref {{ font-size: 18px; font-weight: 900; color: #131419; margin-bottom: 5px; }}
-    .g-label {{ font-size: 13px; font-weight: bold; color: #666; text-transform: uppercase; margin-top: 10px; }}
-    .g-value {{ font-size: 15px; color: #333; font-weight: 500; }}
+    .g-ref {{ font-size: 20px; font-weight: 900; color: #131419; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }}
+    .g-label {{ font-size: 12px; font-weight: bold; color: #888; text-transform: uppercase; margin-top: 12px; }}
+    .g-value {{ font-size: 16px; color: #222; font-weight: 500; line-height: 1.4; }}
     
-    /* Action Taken Badges */
-    .badge-new {{ color: #3498db; font-weight: 900; font-size: 16px; }}
-    .badge-process {{ color: #f1c40f; font-weight: 900; font-size: 16px; }}
-    .badge-resolved {{ color: #2ecc71; font-weight: 900; font-size: 16px; }}
+    /* BADGES (Pill Shape) */
+    .badge-base {{ display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 900; margin-top: 5px; }}
+    .badge-new {{ background-color: #e3f2fd; color: #1976d2; }}
+    .badge-process {{ background-color: #fff3cd; color: #856404; }}
+    .badge-resolved {{ background-color: #d4edda; color: #155724; }}
     
     .remark-box {{
         background-color: #f8f9fa;
-        border-left: 3px solid #2ecc71;
-        padding: 10px;
-        margin-top: 10px;
-        font-style: italic;
-        color: #555;
+        border-left: 4px solid #2ecc71;
+        padding: 12px;
+        margin-top: 12px;
+        color: #444;
+        border-radius: 0 5px 5px 0;
     }}
 
 </style>
@@ -236,7 +224,7 @@ elif st.session_state.page == 'new_form':
         st.session_state.hrms_verified = False
         go_to('landing')
 
-# --- PAGE 3: STATUS CHECK (CARD BASED) ---
+# --- PAGE 3: STATUS CHECK (FIXED CARD RENDER) ---
 elif st.session_state.page == 'status_check':
     st.markdown('<div class="hindi-heading">Grievance History</div>', unsafe_allow_html=True)
     hrms_in = st.text_input("Enter Your HRMS ID").upper().strip()
@@ -246,81 +234,66 @@ elif st.session_state.page == 'status_check':
             st.warning("⚠️ Please enter HRMS ID.")
         else:
             try:
-                # 1. Fetch ALL Data
                 df = pd.DataFrame(get_sheet("GRIEVANCE").get_all_records())
-                
-                # 2. Filter by HRMS ID
                 matches = df[df['HRMS_ID'].astype(str) == hrms_in]
                 
                 if not matches.empty:
                     st.success(f"Found {len(matches)} Record(s)")
-                    
-                    # Reverse to show newest first
-                    matches = matches.iloc[::-1]
+                    matches = matches.iloc[::-1] # Reverse order
                     
                     for i, row in matches.iterrows():
-                        # Determine Colors & Text
                         status = row['STATUS']
                         border_color = "#ccc"
                         action_text = ""
                         action_class = ""
+                        extra_details = ""
                         
                         if status == "NEW":
-                            border_color = "#3498db" # Blue
+                            border_color = "#3498db"
                             action_text = "Yet to Assign"
                             action_class = "badge-new"
                         elif status == "UNDER PROCESS":
-                            border_color = "#f1c40f" # Yellow
+                            border_color = "#f1c40f"
                             action_text = "Assigned to Related Officer"
                             action_class = "badge-process"
-                        elif status == "RESOLVED":
-                            border_color = "#2ecc71" # Green
-                            action_text = "Resolved"
-                            action_class = "badge-resolved"
-
-                        # Retrieve Details
-                        desc = row['GRIEVANCE_TEXT']
-                        assign_date = row.get('ASSIGN_DATE', 'N/A')
-                        resolve_date = row.get('RESOLVE_DATE', 'N/A')
-                        officer = row.get('MARKED_OFFICER', 'N/A')
-                        remark = row.get('OFFICER_REMARK', 'N/A')
-
-                        # Build the Card HTML
-                        html_card = f"""
-                        <div class="g-card" style="border-left-color: {border_color};">
-                            <div class="g-ref">Ref No: {row['REFERENCE_NO']}</div>
-                            
-                            <div class="g-label">Grievance Description</div>
-                            <div class="g-value">{desc}</div>
-                            
-                            <div class="g-label">Action Taken</div>
-                            <div class="{action_class}">{action_text}</div>
-                        """
-                        
-                        # Conditional Details based on Status
-                        if status == "UNDER PROCESS":
-                            html_card += f"""
+                            # Add Assignment Details
+                            assign_date = row.get('ASSIGN_DATE', 'N/A')
+                            extra_details = f"""
                             <div style="margin-top:10px;">
                                 <span style="font-weight:bold; color:#555;">Assigned On:</span> {assign_date}
-                            </div>
-                            """
-                        
-                        if status == "RESOLVED":
-                            html_card += f"""
+                            </div>"""
+                        elif status == "RESOLVED":
+                            border_color = "#2ecc71"
+                            action_text = "Resolved"
+                            action_class = "badge-resolved"
+                            # Add All Details
+                            assign_date = row.get('ASSIGN_DATE', 'N/A')
+                            resolve_date = row.get('RESOLVE_DATE', 'N/A')
+                            officer = row.get('MARKED_OFFICER', 'N/A')
+                            remark = row.get('OFFICER_REMARK', 'N/A')
+                            extra_details = f"""
                             <div style="margin-top:10px;">
                                 <div><span style="font-weight:bold; color:#555;">Assigned On:</span> {assign_date}</div>
                                 <div><span style="font-weight:bold; color:#555;">Resolved On:</span> {resolve_date}</div>
-                                
                                 <div class="remark-box">
                                     <b>Remark by {officer}:</b><br>
                                     "{remark}"
                                 </div>
-                            </div>
-                            """
+                            </div>"""
 
-                        html_card += "</div>" # Close card
+                        # Use textwrap.dedent to strip indentation so Markdown renders HTML correctly
+                        card_html = textwrap.dedent(f"""
+                        <div class="g-card" style="border-left-color: {border_color};">
+                            <div class="g-ref">Ref No: {row['REFERENCE_NO']}</div>
+                            <div class="g-label">Grievance Description</div>
+                            <div class="g-value">{row['GRIEVANCE_TEXT']}</div>
+                            <div class="g-label">Action Taken</div>
+                            <div class="badge-base {action_class}">{action_text}</div>
+                            {extra_details}
+                        </div>
+                        """)
                         
-                        st.markdown(html_card, unsafe_allow_html=True)
+                        st.markdown(card_html, unsafe_allow_html=True)
 
                 else: st.error("❌ No grievances found for this HRMS ID.")
             except Exception as e: st.error(f"Error fetching data: {e}")
