@@ -8,3 +8,4 @@ sql_metadata
 validators
 duckdb
 pytz
+google-auth
