@@ -11,7 +11,7 @@ import gspread
 def get_sheet(sheet_name):
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     if "gcp_service_account" not in st.secrets:
-        st.error("❌ Secrets 'gcp_service_account' not found!")
+        st.error("❌ Secrets not found!")
         st.stop()
     creds_info = st.secrets["gcp_service_account"]
     creds = Credentials.from_service_account_info(creds_info, scopes=scope)
@@ -41,9 +41,8 @@ BTN_FONT_WEIGHT = "900"
 st.set_page_config(page_title="GMS Alambagh", layout="centered")
 
 # ==========================================
-# UNIVERSAL CSS: STRICT CENTERING & LEFT LABELS
+# THE "CENTER-LOCK" CSS ENGINE
 # ==========================================
-# We use dynamic max-width so Admin is wide, others are narrow
 max_w = "1100px" if st.session_state.get('page') == 'admin_dashboard' else "480px"
 
 custom_css = f"""
@@ -55,17 +54,20 @@ custom_css = f"""
         max-width: {max_w} !important;
         padding-top: 1.5rem !important;
         margin: auto !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
     }}
 
-    /* LOGO CENTERING */
+    /* --- LOGO CENTERING --- */
     [data-testid="stImage"] {{ display: flex !important; justify-content: center !important; width: 100% !important; }}
     [data-testid="stImage"] img {{ margin: 0 auto !important; }}
 
-    /* BUTTON CENTERING, BOLDNESS & SHADOW */
-    .stButton {{ width: 100% !important; display: flex !important; justify-content: center !important; }}
+    /* --- STRICT BUTTON CENTER LOCK --- */
+    /* This targets the wrapper of every button in Streamlit */
+    .stButton {{
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
+    }}
+
     div.stButton > button {{
         background-color: {BTN_BG_COLOR} !important;
         color: {BTN_TEXT_COLOR} !important;
@@ -73,25 +75,29 @@ custom_css = f"""
         border-radius: {BTN_ROUNDNESS} !important;
         width: {BTN_WIDTH} !important; 
         height: {BTN_HEIGHT} !important;
-        margin: 12px auto !important;
+        margin: 15px auto !important; /* Auto margins to force center */
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-        box-shadow: 0 6px 12px rgba(0,0,0,0.5) !important;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.5) !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
     }}
+
     div.stButton > button:hover {{
         background-color: {BTN_HOVER_COLOR} !important;
-        transform: translateY(-4px) scale(1.03) !important;
+        transform: translateY(-4px) scale(1.02) !important;
+        box-shadow: 0 12px 24px rgba(167, 201, 87, 0.4) !important;
     }}
+
     div.stButton > button p {{ 
         font-size: {BTN_TEXT_SIZE} !important; 
         font-weight: {BTN_FONT_WEIGHT} !important; 
         color: {BTN_TEXT_COLOR} !important;
+        margin: 0 !important;
     }}
 
-    /* FORM ALIGNMENT: LABELS LEFT, HEADINGS CENTER */
-    [data-testid="stVerticalBlock"] {{ align-items: stretch !important; width: 100% !important; }}
+    /* --- LEFT ALIGNED LABELS & FORM --- */
+    [data-testid="stVerticalBlock"] {{ align-items: stretch !important; }}
     label {{ 
         color: {LABEL_COLOR} !important; 
         font-weight: bold !important; 
@@ -99,11 +105,12 @@ custom_css = f"""
         width: 100% !important; 
         display: block !important;
     }}
+    
     .hindi-heading, .english-heading {{ text-align: center !important; width: 100% !important; }}
     .hindi-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: 900; }}
     .english-heading {{ color: {HEADING_COLOR}; font-size: 18px; font-weight: bold; margin-bottom: 20px; }}
 
-    /* Admin Cards */
+    /* Admin Dash Cards */
     .card-box {{ display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }}
     .card {{ padding: 12px; border-radius: 10px; text-align: center; font-weight: 900; color: #131419; min-width: 140px; }}
 </style>
@@ -111,7 +118,7 @@ custom_css = f"""
 st.markdown(custom_css, unsafe_allow_html=True)
 
 # ==========================================
-# LOGIC & NAVIGATION
+# STATE & NAVIGATION
 # ==========================================
 if 'page' not in st.session_state: st.session_state.page = 'landing'
 if 'hrms_verified' not in st.session_state: st.session_state.hrms_verified = False
@@ -122,7 +129,7 @@ def go_to(page_name):
     st.session_state.page = page_name
 
 # ==========================================
-# PAGE CONTENT
+# PAGE ROUTING
 # ==========================================
 
 # --- PAGE 1: LANDING ---
@@ -134,7 +141,7 @@ if st.session_state.page == 'landing':
     if st.button("🔍 ग्रीवांस की वर्तमान स्थिति जानें"): go_to('status_check')
     if st.button("🔐 Officer/ Admin Login"): go_to('login')
 
-# --- PAGE 2: REGISTRATION (FULL RESTORED) ---
+# --- PAGE 2: REGISTRATION ---
 elif st.session_state.page == 'new_form':
     st.markdown('<div class="hindi-heading">Grievance Registration</div>', unsafe_allow_html=True)
     if not st.session_state.hrms_verified:
@@ -171,7 +178,8 @@ elif st.session_state.page == 'new_form':
             if not any(x in [None, "", "Select"] for x in [emp_no, emp_desig, emp_trade, emp_sec, g_type, g_text]):
                 try:
                     ws = get_sheet("GRIEVANCE")
-                    count = len(pd.DataFrame(ws.get_all_records())[lambda x: x['HRMS_ID'] == st.session_state.active_hrms]) + 1
+                    df_g = pd.DataFrame(ws.get_all_records())
+                    count = len(df_g[df_g['HRMS_ID'] == st.session_state.active_hrms]) + 1
                     ref_no = f"{datetime.now().strftime('%Y%m%d')}{st.session_state.active_hrms}{str(count).zfill(3)}"
                     new_row = [ref_no, datetime.now().strftime("%d-%m-%Y %H:%M"), st.session_state.active_hrms, st.session_state.found_emp_name, 
                                emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "NEW", "N/A", "N/A"]
@@ -184,7 +192,7 @@ elif st.session_state.page == 'new_form':
         st.session_state.hrms_verified = False
         go_to('landing')
 
-# --- PAGE 4: LOGIN (SEQUENTIAL RESTORED) ---
+# --- PAGE 4: LOGIN ---
 elif st.session_state.page == 'login':
     st.markdown('<div class="hindi-heading">Superuser Login</div>', unsafe_allow_html=True)
     locked = st.session_state.super_verified
@@ -215,7 +223,7 @@ elif st.session_state.page == 'login':
         st.session_state.super_verified = False
         go_to('landing')
 
-# --- ADMIN DASHBOARD (FULL INTEGRATED) ---
+# --- ADMIN DASHBOARD ---
 elif st.session_state.page == 'admin_dashboard':
     st.markdown('<div class="hindi-heading" style="font-size:35px;">Admin Dashboard</div>', unsafe_allow_html=True)
     st.markdown(f'<div style="text-align:center; color:#fca311; font-weight:bold;">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
