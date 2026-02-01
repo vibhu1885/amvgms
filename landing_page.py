@@ -105,9 +105,9 @@ custom_css = f"""
 
     .hindi-heading {{
         color: {HEADING_COLOR};
-        font-size: 16px;
+        font-size: 18px;
         font-weight: bold;
-        margin-top: 6px;
+        margin-top: 0px;
     }}
     
     .english-heading {{
