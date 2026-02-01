@@ -241,14 +241,14 @@ elif st.session_state.page == 'status_check':
 
 # --- SUPERUSER LOGIN (SEQUENTIAL) ---
 elif st.session_state.page == 'login':
-    st.markdown('<div class="hindi-heading">Superuser Login</div>', unsafe_allow_html=True)
-    st.markdown('<div class="english-heading">अधिकारी लॉगिन</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hindi-heading">Officer/ Admin Login</div>', unsafe_allow_html=True)
+    st.markdown('<div class="english-heading">अधिकारी/ एडमिन लॉगिन</div>', unsafe_allow_html=True)
 
     locked = st.session_state.super_verified
     s_hrms = st.text_input("Enter Your HRMS ID", value=st.session_state.active_super.get('HRMS_ID', ""), disabled=locked).upper().strip()
 
     if not st.session_state.super_verified:
-        if st.button("Find User / यूजर खोजें"):
+        if st.button("SEARCH USER"):
             try:
                 df_off = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
                 match = df_off[df_off['HRMS_ID'] == s_hrms]
@@ -263,7 +263,7 @@ elif st.session_state.page == 'login':
         st.success(f"✅ USER Found: {u['NAME']} ({u['RANK']})")
         login_key = st.text_input("Enter Login Key", type="password")
         
-        if st.button("Login / लॉगिन करें"):
+        if st.button("ENTER DASHBOARD"):
             if str(login_key) == str(u['LOGIN_KEY']):
                 role = u['ROLE'].upper()
                 if role == "ADMIN": go_to('admin_dashboard')
