@@ -271,7 +271,7 @@ elif st.session_state.page == 'status_check':
                             action_text = "NEW, Assign Pending"
                             action_class = "badge-new"
                         elif status == "UNDER PROCESS":
-                            bg_color = "#fff9c4" # Light Yellow BG
+                            bg_color = "#FFF" # Light Yellow BG
                             border_color = "#fbc02d"
                             action_text = "Assigned to Related Officer"
                             action_class = "badge-process"
@@ -284,7 +284,7 @@ elif st.session_state.page == 'status_check':
                             </div>""")
                         
                         elif status == "RESOLVED":
-                            bg_color = "#e8f5e9" # Light Green BG
+                            bg_color = "#FFF" # Light Green BG
                             border_color = "#2e7d32"
                             action_text = "Resolved"
                             action_class = "badge-resolved"
@@ -305,7 +305,7 @@ elif st.session_state.page == 'status_check':
                                     <span style="color:#000; font-weight:600;">{resolve_date}</span>
                                 </div>
                                 <div class="remark-box">
-                                    <b style="color:#000;">Remark by {officer}:</b><br>
+                                    <b style="color:#000;">Remark by: {officer}:</b><br>
                                     "{remark}"
                                 </div>
                             </div>""")
