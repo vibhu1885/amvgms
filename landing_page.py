@@ -6,108 +6,115 @@ from google.oauth2.service_account import Credentials
 import gspread
 
 # ==========================================
-# 0. SETUP & CONSTANTS
+# 0. SETUP
 # ==========================================
 LOGO_PATH = "assets/office_logo.png"
 LOGO_WIDTH = 130
 APP_BG_COLOR = "#131419"
 
-# Page Config: We use 'wide' to support the Admin Table, 
-# but we will constrain the Landing Page using CSS.
+# Page Config
 st.set_page_config(page_title="GMS Alambagh", layout="wide")
 
 # ==========================================
-# 1. THE "UNIFORM ALIGNMENT" CSS ENGINE
+# 1. THE "TOTAL CENTER" CSS ENGINE
 # ==========================================
-# This determines how wide the content area is. 
-# Narrow (500px) for Landing/Login, Wide (1200px) for Admin.
-content_width = "1200px" if st.session_state.get('page') == 'admin_dashboard' else "500px"
+# Dynamic width: Wide for Admin (1200px), Medium for Forms (700px)
+content_width = "1200px" if st.session_state.get('page') == 'admin_dashboard' else "600px"
 
 st.markdown(f"""
 <style>
     header, footer, [data-testid="stHeader"] {{ visibility: hidden; height: 0; }}
     .stApp {{ background-color: {APP_BG_COLOR}; }}
     
-    /* 1. Main Container Width Control */
+    /* 1. Main Container: Center Everything */
     .block-container {{
         max-width: {content_width} !important;
         padding-top: 2rem !important;
-        padding-bottom: 2rem !important;
-        margin: 0 auto !important; /* Centers the container itself */
+        margin: 0 auto !important;
+        text-align: center !important;
+        align-items: center !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }}
+    
+    /* 2. Vertical Blocks (The invisible wrappers) */
+    [data-testid="stVerticalBlock"] {{
+        align-items: center !important;
+        text-align: center !important;
+        width: 100% !important;
     }}
 
-    /* 2. Strict Logo Centering */
+    /* 3. Logo */
     [data-testid="stImage"] {{
         display: flex !important;
         justify-content: center !important;
-        align-items: center !important;
         width: 100% !important;
         margin-bottom: 10px;
     }}
-    [data-testid="stImage"] img {{
-        margin: 0 auto !important; 
-    }}
+    [data-testid="stImage"] img {{ margin: 0 auto !important; }}
 
-    /* 3. Button Styling - THE FIX */
-    .stButton {{
-        display: flex !important;
-        justify-content: center !important; /* Centers the button wrapper */
+    /* 4. Headings & Text */
+    h1, h2, h3, p, div, span, label {{
+        text-align: center !important;
+        color: white !important;
+    }}
+    .hindi-heading {{ font-size: 24px; font-weight: 900; margin-bottom: 5px; width: 100%; }}
+    .english-heading {{ font-size: 18px; font-weight: bold; margin-bottom: 25px; width: 100%; }}
+
+    /* 5. LABELS & INPUTS (The big change) */
+    /* Force Labels to center */
+    .stTextInput label, .stSelectbox label, .stTextArea label {{
         width: 100% !important;
+        text-align: center !important;
+        justify-content: center !important;
+        display: flex !important;
+        font-size: 16px !important;
+        font-weight: bold !important;
     }}
     
+    /* Force Text INSIDE inputs to center */
+    .stTextInput input {{ text-align: center !important; }}
+    .stTextArea textarea {{ text-align: center !important; }}
+    
+    /* Center the Dropdown Text */
+    .stSelectbox div[data-baseweb="select"] div {{ text-align: center !important; justify-content: center !important; }}
+
+    /* 6. BUTTONS (Uniform & Centered) */
+    .stButton {{
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
+    }}
     div.stButton > button {{
         background-color: #faf9f9 !important;
         color: #131419 !important;
         border: 4px solid #fca311 !important;
         border-radius: 22px !important;
-        
-        /* FIXED DIMENSIONS - This ensures they are always the same size */
         width: 300px !important; 
         height: 70px !important;
-        
-        /* TYPOGRAPHY */
         font-weight: 900 !important;
         font-size: 17px !important;
-        
-        /* ALIGNMENT INSIDE BUTTON */
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        text-align: center !important;
-        
-        /* POSITIONING */
-        margin: 10px auto !important; /* Centers button in its container */
+        margin: 10px auto !important;
         box-shadow: 0 8px 16px rgba(0,0,0,0.6);
-        transition: all 0.3s ease;
     }}
-    
     div.stButton > button:hover {{
         background-color: #a7c957 !important;
         transform: translateY(-3px);
     }}
-    
-    div.stButton > button p {{ 
-        font-weight: 900 !important; 
-        margin: 0 !important;
-        padding: 0 !important;
-    }}
 
-    /* 4. Headings */
-    .hindi-heading {{ text-align: center !important; color: white; font-weight: 900; font-size: 22px; width: 100%; }}
-    .english-heading {{ text-align: center !important; color: white; font-weight: bold; font-size: 18px; margin-bottom: 25px; width: 100%; }}
-    
-    /* 5. Forms (Left Aligned Labels) */
-    label {{ color: white !important; font-weight: bold !important; text-align: left !important; display: block !important; }}
-    .stTextInput, .stSelectbox, .stTextArea {{ text-align: left !important; }}
-
-    /* Admin Cards */
-    .card-box {{ display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }}
+    /* 7. TABLES & CARDS */
+    .card-box {{ display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; width: 100%; margin: 0 auto; }}
     .card {{ padding: 15px; border-radius: 12px; text-align: center; font-weight: 900; color: #131419; min-width: 150px; flex: 1; }}
+    
+    /* Force Dataframes to center */
+    [data-testid="stDataFrame"] {{ width: 100% !important; display: flex !important; justify-content: center !important; }}
+    [data-testid="stTable"] {{ width: 100% !important; display: flex !important; justify-content: center !important; }}
+
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. STATE & DATABASE
+# 2. STATE & HELPERS
 # ==========================================
 if 'page' not in st.session_state: st.session_state.page = 'landing'
 if 'hrms_verified' not in st.session_state: st.session_state.hrms_verified = False
@@ -146,7 +153,7 @@ if st.session_state.page == 'landing':
     st.markdown('<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
     st.markdown('<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
     
-    # Because CSS handles centering (margin: 0 auto), we don't need columns here.
+    # Buttons - CSS handles centering automatically now
     if st.button("📝 नया Grievance दर्ज करें"): go_to('new_form')
     if st.button("🔍 ग्रीवांस की वर्तमान स्थिति जानें"): go_to('status_check')
     if st.button("🔐 Officer/ Admin Login"): go_to('login')
@@ -156,7 +163,7 @@ elif st.session_state.page == 'new_form':
     st.markdown('<div class="hindi-heading">Grievance Registration</div>', unsafe_allow_html=True)
     
     if not st.session_state.hrms_verified:
-        hrms_in = st.text_input("Enter HRMS ID*", max_chars=6).upper().strip()
+        hrms_in = st.text_input("Enter HRMS ID (HRMS आईडी दर्ज करें)", max_chars=6).upper().strip()
         if st.button("🔎 Verify ID"):
             try:
                 df = pd.DataFrame(get_sheet("EMPLOYEE_MAPPING").get_all_records())
@@ -169,7 +176,7 @@ elif st.session_state.page == 'new_form':
                 else: st.error("❌ HRMS ID not found.")
             except Exception as e: st.error(f"Error: {e}")
     else:
-        st.success(f"✅ Employee: {st.session_state.found_emp_name}")
+        st.success(f"✅ Verified: {st.session_state.found_emp_name}")
         
         try:
             dd_df = pd.DataFrame(get_sheet("DROPDOWN_MAPPINGS").get_all_records())
@@ -178,12 +185,13 @@ elif st.session_state.page == 'new_form':
             g_types = ["Select"] + [x for x in dd_df['GRIEVANCE_TYPE_LIST'].dropna().unique().tolist() if x]
         except: designations = trades = g_types = ["Select"]
 
-        emp_no = st.text_input("Employee Number*")
-        emp_desig = st.selectbox("Designation*", designations)
-        emp_trade = st.selectbox("Trade*", trades)
-        emp_sec = st.text_input("Section*")
-        g_type = st.selectbox("Grievance Type*", g_types)
-        g_text = st.text_area("Complaint Details*", max_chars=1000)
+        # These inputs will now have centered labels and centered text
+        emp_no = st.text_input("Employee Number")
+        emp_desig = st.selectbox("Designation", designations)
+        emp_trade = st.selectbox("Trade", trades)
+        emp_sec = st.text_input("Section")
+        g_type = st.selectbox("Grievance Type", g_types)
+        g_text = st.text_area("Complaint Details", max_chars=1000)
 
         if st.button("📤 Grievance जमा करें"):
             if not any(x in [None, "", "Select"] for x in [emp_no, emp_desig, emp_trade, emp_sec, g_type, g_text]):
@@ -207,7 +215,7 @@ elif st.session_state.page == 'new_form':
 # --- STATUS CHECK ---
 elif st.session_state.page == 'status_check':
     st.markdown('<div class="hindi-heading">Grievance Status</div>', unsafe_allow_html=True)
-    ref_in = st.text_input("Enter Reference Number*").strip()
+    ref_in = st.text_input("Enter Reference Number").strip()
     
     if st.button("🔍 Check Status"):
         try:
@@ -215,8 +223,8 @@ elif st.session_state.page == 'status_check':
             match = df[df['REFERENCE_NO'].astype(str) == ref_in]
             if not match.empty:
                 res = match.iloc[0]
-                st.info(f"**Status:** {res['STATUS']}")
-                st.write(f"**Remark:** {res['OFFICER_REMARK']}")
+                st.info(f"Status: {res['STATUS']}")
+                st.write(f"Remark: {res['OFFICER_REMARK']}")
             else: st.error("❌ Not Found")
         except: st.error("Error fetching data.")
         
@@ -266,14 +274,14 @@ elif st.session_state.page == 'admin_dashboard':
     # Oversight Cards
     st.markdown(f"""
     <div class="card-box">
-        <div class="card" style="background:white;">TOTAL: {len(df)}</div>
-        <div class="card" style="background:#3498db; color:white;">NEW: {len(df[df['STATUS']=='NEW'])}</div>
-        <div class="card" style="background:#f1c40f;">PROCESS: {len(df[df['STATUS']=='UNDER PROCESS'])}</div>
-        <div class="card" style="background:#2ecc71; color:white;">RESOLVED: {len(df[df['STATUS']=='RESOLVED'])}</div>
+        <div class="card" style="background:white;">TOTAL<br>{len(df)}</div>
+        <div class="card" style="background:#3498db; color:white;">NEW<br>{len(df[df['STATUS']=='NEW'])}</div>
+        <div class="card" style="background:#f1c40f;">PROCESS<br>{len(df[df['STATUS']=='UNDER PROCESS'])}</div>
+        <div class="card" style="background:#2ecc71; color:white;">RESOLVED<br>{len(df[df['STATUS']=='RESOLVED'])}</div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Filters
+    # Filters - Using Columns to organize, but centering content within
     c1, c2, c3, c4 = st.columns([2, 2, 2, 2])
     with c1: f_hrms = st.text_input("Filter HRMS").upper()
     with c2: f_name = st.text_input("Filter Name")
@@ -294,7 +302,7 @@ elif st.session_state.page == 'admin_dashboard':
 
     st.markdown("---")
     for i, row in f_df.iterrows():
-        ac1, ac2, ac3 = st.columns([1.5, 5, 2.5])
+        ac1, ac2, ac3 = st.columns([2, 4, 3])
         
         with ac1:
             color = "#3498db" if row['STATUS'] == "NEW" else "#f1c40f" if row['STATUS'] == "UNDER PROCESS" else "#2ecc71"
@@ -311,7 +319,6 @@ elif st.session_state.page == 'admin_dashboard':
                 if sel != "Select Officer":
                     now = datetime.now().strftime("%d-%m-%Y %H:%M")
                     try:
-                        # Find the correct row in the original sheet
                         cell = ws_g.find(str(row['REFERENCE_NO']))
                         ws_g.update_cell(cell.row, 11, "UNDER PROCESS")
                         ws_g.update_cell(cell.row, 12, f"Marked to: {sel} at {now}")
