@@ -49,7 +49,7 @@ def get_sheet(sheet_name):
 # ==========================================
 st.set_page_config(page_title="GMS Alambagh", layout="wide")
 
-# Container Logic: Wide for Dashboards, Narrow for Forms
+# Container Logic
 is_dashboard = st.session_state.page in ['admin_dashboard', 'officer_dashboard']
 container_max_width = "1200px" if is_dashboard else "480px"
 
@@ -113,7 +113,7 @@ st.markdown(f"""
         margin: 0 !important; 
     }}
     
-    /* 6. SCORECARDS */
+    /* 6. SCORECARDS (DASHBOARDS) */
     .score-container {{ display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }}
     .score-card {{
         flex: 1; min-width: 150px; padding: 15px; border-radius: 12px; text-align: center;
@@ -122,9 +122,29 @@ st.markdown(f"""
     .score-number {{ font-size: 28px; line-height: 1.2; }}
     .score-label {{ font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }}
 
-    /* 7. TABLE ROW STYLING */
-    .detail-label {{ color: #fca311; font-weight: bold; font-size: 14px; }}
-    .detail-val {{ color: white; font-weight: normal; font-size: 14px; margin-bottom: 5px; }}
+    /* 7. STATUS PAGE SPECIFIC */
+    .status-wrapper {{
+        background-color: white;
+        padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }}
+    .status-header {{
+        border-bottom: 2px solid #eee;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+        text-align: center;
+    }}
+    .timeline-item {{
+        background-color: #2c2e3a;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 12px;
+        border-left-width: 5px;
+        border-left-style: solid;
+        text-align: left;
+    }}
 
 </style>
 """, unsafe_allow_html=True)
@@ -202,7 +222,6 @@ elif st.session_state.page == 'new_form':
                     now_ist = get_ist_time()
                     new_row = [ref_no, now_ist, st.session_state.active_hrms, st.session_state.found_emp_name, 
                                emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "NEW", "N/A", "N/A", "N/A", "N/A"]
-                    # N/A placeholders for: Marked Officer, Assign Date, Officer Remark, Resolve Date
                     ws.append_row(new_row)
                     st.success(f"✅ Registered! Ref No: {ref_no}")
                     st.balloons()
@@ -214,23 +233,85 @@ elif st.session_state.page == 'new_form':
         st.session_state.hrms_verified = False
         go_to('landing')
 
-# --- PAGE 3: STATUS CHECK ---
+# --- PAGE 3: STATUS CHECK (HRMS BASED) ---
 elif st.session_state.page == 'status_check':
-    st.markdown('<div class="hindi-heading">Grievance Status</div>', unsafe_allow_html=True)
-    ref_in = st.text_input("Enter Reference Number").strip()
+    st.markdown('<div class="hindi-heading">Grievance History</div>', unsafe_allow_html=True)
+    hrms_in = st.text_input("Enter Your HRMS ID").upper().strip()
     
-    if st.button("🔍 Check Status"):
-        if not ref_in: st.warning("⚠️ Enter Reference Number.")
+    if st.button("🔍 Find Records"):
+        if not hrms_in: 
+            st.warning("⚠️ Please enter HRMS ID.")
         else:
             try:
+                # 1. Fetch ALL Data
                 df = pd.DataFrame(get_sheet("GRIEVANCE").get_all_records())
-                match = df[df['REFERENCE_NO'].astype(str) == ref_in]
-                if not match.empty:
-                    res = match.iloc[0]
-                    st.info(f"**Status:** {res['STATUS']}")
-                    st.write(f"**Remark:** {res.get('OFFICER_REMARK', 'N/A')}")
-                else: st.error("❌ Not Found")
-            except: st.error("Error fetching data.")
+                
+                # 2. Filter by HRMS ID (Force string for safety)
+                matches = df[df['HRMS_ID'].astype(str) == hrms_in]
+                
+                if not matches.empty:
+                    st.success(f"Found {len(matches)} Record(s)")
+                    
+                    # 3. Iterate through matches (Reverse order to show newest first if needed)
+                    # matches = matches.iloc[::-1] 
+                    
+                    for i, row in matches.iterrows():
+                        status_color = "#3498db" if row['STATUS'] == "NEW" else "#f1c40f" if row['STATUS'] == "UNDER PROCESS" else "#2ecc71"
+                        
+                        st.markdown(f"""
+                        <div class="status-wrapper">
+                            <div class="status-header">
+                                <div style="color: #888; font-size: 14px; font-weight: bold;">REFERENCE NO</div>
+                                <div style="color: #131419; font-size: 24px; font-weight: 900; letter-spacing: 1px;">{row['REFERENCE_NO']}</div>
+                                <div style="margin-top: 5px;">
+                                    <span style="background-color: {status_color}; color: white; padding: 5px 15px; border-radius: 15px; font-weight: bold; font-size: 14px;">
+                                        {row['STATUS']}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div style="color: #555; font-weight: bold; margin-bottom: 10px;">📜 Activity Timeline:</div>
+                        """, unsafe_allow_html=True)
+
+                        # A. SUBMISSION
+                        st.markdown(f"""
+                        <div class="timeline-item" style="border-left-color: #3498db;">
+                            <div style="color: white; font-weight: bold; font-size: 15px;">📝 Issue Submitted</div>
+                            <div style="color: #aaa; font-size: 12px;">{row['DATE_TIME']}</div>
+                            <div style="color: #eee; font-size: 13px; font-style: italic; margin-top:5px;">"{row['GRIEVANCE_TEXT']}"</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                        # B. ASSIGNMENT (If Process or Resolved)
+                        if row['STATUS'] in ['UNDER PROCESS', 'RESOLVED']:
+                            assign_date = row.get('ASSIGN_DATE', 'N/A')
+                            officer = row.get('MARKED_OFFICER', 'N/A')
+                            st.markdown(f"""
+                            <div class="timeline-item" style="border-left-color: #f1c40f;">
+                                <div style="color: white; font-weight: bold; font-size: 15px;">👤 Officer Assigned</div>
+                                <div style="color: #aaa; font-size: 12px;">{assign_date}</div>
+                                <div style="color: #eee; font-size: 13px; margin-top: 5px;">Officer: <b>{officer}</b></div>
+                            </div>
+                            """, unsafe_allow_html=True)
+
+                        # C. RESOLUTION (If Resolved)
+                        if row['STATUS'] == 'RESOLVED':
+                            res_date = row.get('RESOLVE_DATE', 'N/A')
+                            remark = row.get('OFFICER_REMARK', 'N/A')
+                            st.markdown(f"""
+                            <div class="timeline-item" style="border-left-color: #2ecc71;">
+                                <div style="color: white; font-weight: bold; font-size: 15px;">✅ Resolution Provided</div>
+                                <div style="color: #aaa; font-size: 12px;">{res_date}</div>
+                                <div style="background-color: #222; padding: 8px; border-radius: 5px; margin-top: 8px; color: #fca311; font-size: 13px;">
+                                    "{remark}"
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        st.markdown("</div>", unsafe_allow_html=True) # End Wrapper
+
+                else: st.error("❌ No grievances found for this HRMS ID.")
+            except Exception as e: st.error(f"Error fetching data: {e}")
     
     if st.button("🏠 Back to Home"): go_to('landing')
 
@@ -344,8 +425,13 @@ elif st.session_state.page == 'admin_dashboard':
                             st.rerun()
                         except: st.error("Update Failed")
                 else:
-                    assign_date = row.get('ASSIGN_DATE', row.get('OFFICER_REMARK', 'N/A')) # Compatibility
-                    st.markdown(f"**Assigned To:** {row['MARKED_OFFICER']} | **Date:** {assign_date}")
+                    assign_date = row.get('ASSIGN_DATE', row.get('OFFICER_REMARK', 'N/A')) 
+                    st.markdown(f"""
+                    <div style="background-color: #2c2e3a; padding: 10px; border-radius: 8px; border: 1px solid #444;">
+                        <span style="color: #fca311; font-weight: bold;">Assigned To:</span> <span style="color: white; font-weight: bold;">{row['MARKED_OFFICER']}</span>
+                        <span style="color: #fca311; font-weight: bold; margin-left: 15px;">Date:</span> <span style="color: white;">{assign_date}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
                 st.markdown("---")
 
     if st.button("🚪 Logout"):
@@ -357,16 +443,12 @@ elif st.session_state.page == 'officer_dashboard':
     st.markdown('<div class="hindi-heading" style="font-size:35px;">Officer Dashboard</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="welcome-msg">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
 
-    # 1. Identity Check
     my_name_rank = f"{st.session_state.active_super['NAME']} ({st.session_state.active_super['RANK']})"
     
     ws_g = get_sheet("GRIEVANCE")
     df = pd.DataFrame(ws_g.get_all_records())
-
-    # 2. Filter My Grievances
     my_df = df[df['MARKED_OFFICER'] == my_name_rank]
 
-    # 3. Scorecards
     cnt_total = len(my_df)
     cnt_pending = len(my_df[my_df['STATUS']=='UNDER PROCESS'])
     cnt_resolved = len(my_df[my_df['STATUS']=='RESOLVED'])
@@ -385,7 +467,6 @@ elif st.session_state.page == 'officer_dashboard':
     </div>
     """, unsafe_allow_html=True)
 
-    # 4. Filter
     st.write("### 🔽 Filter My Tasks")
     off_filter = st.radio("Show:", ["ALL", "PENDING", "RESOLVED"], horizontal=True, key="off_rad")
     
@@ -393,20 +474,17 @@ elif st.session_state.page == 'officer_dashboard':
     if off_filter == "PENDING": view_df = view_df[view_df['STATUS'] == 'UNDER PROCESS']
     elif off_filter == "RESOLVED": view_df = view_df[view_df['STATUS'] == 'RESOLVED']
 
-    # 5. Table & Action
     st.markdown("---")
     if view_df.empty: st.info("No tasks found.")
     else:
         for i, row in view_df.iterrows():
             with st.container():
-                # Header
                 c1, c2, c3 = st.columns([2, 4, 2])
                 color = "#f1c40f" if row['STATUS'] == "UNDER PROCESS" else "#2ecc71"
                 c1.markdown(f"**Ref:** `{row['REFERENCE_NO']}`")
                 c2.markdown(f"**Status:** <span style='color:{color}; font-weight:bold;'>{row['STATUS']}</span>", unsafe_allow_html=True)
                 c3.markdown(f"📅 Assigned: {row.get('ASSIGN_DATE', 'N/A')}")
 
-                # Details
                 d1, d2, d3 = st.columns(3)
                 d1.markdown(f"Name: **{row['EMP_NAME']}**<br>HRMS: {row['HRMS_ID']}", unsafe_allow_html=True)
                 d2.markdown(f"Desig: {row['DESIGNATION']}<br>Section: {row['SECTION']}", unsafe_allow_html=True)
@@ -414,12 +492,9 @@ elif st.session_state.page == 'officer_dashboard':
                 
                 st.info(f"**Issue:** {row['GRIEVANCE_TEXT']}")
 
-                # RESOLVE ACTION
                 if row['STATUS'] == "UNDER PROCESS":
                     rem_key = f"rem_{i}"
-                    # Mandatory Text Box
                     remark = st.text_area("Resolution Remarks (Mandatory)*", key=rem_key)
-                    
                     if st.button("✅ Mark as Resolved", key=f"btn_{i}"):
                         if not remark.strip():
                             st.error("⚠️ Please enter resolution remarks.")
@@ -427,8 +502,6 @@ elif st.session_state.page == 'officer_dashboard':
                             try:
                                 now_ist = get_ist_time()
                                 cell = ws_g.find(str(row['REFERENCE_NO']))
-                                # Update Columns: 
-                                # 11=Status, 14=Officer Remark, 15=Resolve Date
                                 ws_g.update_cell(cell.row, 11, "RESOLVED")
                                 ws_g.update_cell(cell.row, 14, remark)
                                 ws_g.update_cell(cell.row, 15, now_ist)
@@ -437,7 +510,6 @@ elif st.session_state.page == 'officer_dashboard':
                                 st.rerun()
                             except: st.error("Update Error")
                 else:
-                    # Show Resolution Details
                     st.markdown(f"""
                     <div style="background-color: #2c2e3a; padding: 10px; border-radius: 8px;">
                         <span style="color: #2ecc71; font-weight: bold;">Resolution:</span> {row.get('OFFICER_REMARK', 'N/A')}<br>
