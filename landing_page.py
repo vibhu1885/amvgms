@@ -19,12 +19,12 @@ BTN_WIDTH = "300px"
 BTN_BG_COLOR = "#faf9f9"
 BTN_TEXT_COLOR = "#131419"
 BTN_BORDER_COLOR = "#fca311"
-BTN_BORDER_WIDTH = "2px"
-BTN_ROUNDNESS = "25px"
+BTN_BORDER_WIDTH = "4px"
+BTN_ROUNDNESS = "22px"
 BTN_HOVER_COLOR = "#a7c957"
 
 # --- FONT CONTROLS ---
-BTN_TEXT_SIZE = "20px"     # Increased default size
+BTN_TEXT_SIZE = "18px"     # Increased default size
 BTN_FONT_WEIGHT = "900"    # Ultra bold
 
 # 4. Label & Text Controls
