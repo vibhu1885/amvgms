@@ -1,194 +1,60 @@
-import streamlit as st
-import os
-
 # ==========================================
-# CENTRAL CONTROL PANEL (STYLING)
+# PAGE 2: GRIEVANCE REGISTRATION
 # ==========================================
-# 1. Logo & Image Controls
-LOGO_PATH = "assets/office_logo.png" 
-LOGO_WIDTH = 130 
-
-# 2. Background & Global Colors
-APP_BG_COLOR = "#131419"  
-HEADING_COLOR = "#FFFFFF" 
-LABEL_COLOR = "#FFFFFF"   
-
-# 3. Button Master Controls (SIZE & LOOK)
-BTN_HEIGHT = "70px"        
-BTN_WIDTH = "300px"         
-BTN_BG_COLOR = "#faf9f9"
-BTN_TEXT_COLOR = "#131419"
-BTN_BORDER_COLOR = "#fca311"
-BTN_BORDER_WIDTH = "4px"
-BTN_ROUNDNESS = "22px"
-BTN_HOVER_COLOR = "#a7c957"
-
-# --- FONT CONTROLS ---
-BTN_TEXT_SIZE = "17px"     # Increased default size
-BTN_FONT_WEIGHT = "900"    # Ultra bold
-
-# 4. Label & Text Controls
-LABEL_FONT_SIZE = "18px"
-HEADING_FONT_SIZE_HI = "26px" 
-HEADING_FONT_SIZE_EN = "20px"
-
-# ==========================================
-# THE GLOBAL ALIGNMENT ENGINE (CSS)
-# ==========================================
-st.set_page_config(page_title="GMS Alambagh", layout="centered")
-
-custom_css = f"""
-<style>
-    /* 1. Remove all Streamlit padding/header/footer */
-    header, footer, [data-testid="stHeader"] {{
-        visibility: hidden;
-        height: 0;
-    }}
-
-    .stApp {{
-        background-color: {APP_BG_COLOR};
-    }}
-
-    /* 2. Main Container */
-    .block-container {{
-        max-width: 480px !important;
-        padding-top: 2rem !important;
-        padding-left: 15px !important;
-        padding-right: 15px !important;
-        margin: 0 auto !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important; 
-        justify-content: flex-start !important; 
-    }}
-
-    /* 3. Center blocks */
-    [data-testid="stVerticalBlock"] {{
-        width: 100% !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-    }}
-
-    /* 4. Logo Alignment */
-    [data-testid="stImage"] {{
-        display: flex !important;
-        justify-content: center !important;
-        width: 100% !important;
-        margin-bottom: 6px !important;
-    }}
-
-    /* 5. UNIFORM BUTTON STYLING */
-    .stButton {{
-        width: 100% !important;
-        display: flex !important;
-        justify-content: center !important;
-    }}
-
-    div.stButton > button {{
-        background-color: {BTN_BG_COLOR} !important;
-        color: {BTN_TEXT_COLOR} !important;
-        border: {BTN_BORDER_WIDTH} solid {BTN_BORDER_COLOR} !important;
-        border-radius: {BTN_ROUNDNESS} !important;
-        
-        width: {BTN_WIDTH} !important; 
-        height: {BTN_HEIGHT} !important;
-        
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        
-        margin: 10px 0px !important;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    }}
-
-    /* Target the text inside the button specifically for Font Control */
-    div.stButton > button p {{
-        font-size: {BTN_TEXT_SIZE} !important;
-        font-weight: {BTN_FONT_WEIGHT} !important;
-        color: {BTN_TEXT_COLOR} !important;
-    }}
-
-    div.stButton > button:hover {{
-        background-color: {BTN_HOVER_COLOR} !important;
-        border-color: {BTN_TEXT_COLOR} !important;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(79, 139, 249, 0.4);
-    }}
-
-    /* 6. Text and Heading Centering */
-    .hindi-heading, .english-heading, p, label, .stMarkdown {{
-        text-align: center !important;
-        width: 100% !important;
-    }}
-
-    .hindi-heading {{
-        color: {HEADING_COLOR};
-        font-size: 20px;
-        font-weight: 900;
-        margin-top: 0px;
-    }}
-    
-    .english-heading {{
-        color: {HEADING_COLOR};
-        font-size: {HEADING_FONT_SIZE_EN};
-        font-weight: bold;
-        margin-bottom: 20px;
-    }}
-
-    /* 7. Input Field Styling */
-    [data-testid="stTextInput"], [data-testid="stTextArea"] {{
-        width: 100% !important;
-    }}
-</style>
-"""
-st.markdown(custom_css, unsafe_allow_html=True)
-
-# ==========================================
-# PAGE NAVIGATION
-# ==========================================
-if 'page' not in st.session_state:
-    st.session_state.page = 'landing'
-
-def go_to(page_name):
-    st.session_state.page = page_name
-
-# ==========================================
-# PAGE CONTENT (landing_page.py)
-# ==========================================
-
-if st.session_state.page == 'landing':
-    if os.path.exists(LOGO_PATH):
-        st.image(LOGO_PATH, width=LOGO_WIDTH)
-    
-    st.markdown(f'<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
-    
-    if st.button("📝 नया Grievance दर्ज करें"):
-        go_to('new_form')
-
-    if st.button("🔍 ग्रीवांस की वर्तमान स्थिति जानें"):
-        go_to('status_check')
-
-    if st.button("🔐 Officer/ Admin Login"):
-        go_to('login')
-
 elif st.session_state.page == 'new_form':
-    st.markdown('<div class="hindi-heading">विवरण दर्ज करें</div>', unsafe_allow_html=True)
-    st.text_input("Grievance Category")
-    if st.button("⬅️ Back to Home"):
-        go_to('landing')
+    st.markdown('<div class="hindi-heading">Grievance Registration</div>', unsafe_allow_html=True)
+    st.markdown('<div class="english-heading">शिकायत पंजीकरण</div>', unsafe_allow_html=True)
 
-elif st.session_state.page == 'status_check':
-    st.markdown('<div class="hindi-heading">स्थिति जांचें</div>', unsafe_allow_html=True)
-    st.text_input("Token Number")
-    if st.button("⬅️ Back to Home"):
-        go_to('landing')
+    # Initialize session state for HRMS verification if not exists
+    if 'hrms_verified' not in st.session_state:
+        st.session_state.hrms_verified = False
+    if 'found_emp_name' not in st.session_state:
+        st.session_state.found_emp_name = ""
 
-elif st.session_state.page == 'login':
-    st.markdown('<div class="hindi-heading">Admin Login</div>', unsafe_allow_html=True)
-    st.text_input("UserID")
-    st.text_input("Password", type="password")
+    # HRMS ID Input Box
+    hrms_input = st.text_input(
+        "Enter HRMS ID (अपनी HRMS ID दर्ज करें)", 
+        max_chars=6, 
+        help="Enter exactly 6 CAPITAL alphabets"
+    ).upper() # Force uppercase
+
+    # Enter/Verify Button
+    if st.button("Verify ID / सत्यापित करें"):
+        # Validation: Exact 6 Alphabets
+        if len(hrms_input) == 6 and hrms_input.isalpha():
+            
+            # --- DATABASE LOOKUP LOGIC ---
+            # Replace the following lines with your actual Sheet search logic
+            # Example: df = get_sheet_data("EMPLOYEE_MAPPING")
+            # match = df[df['HRMS_ID'] == hrms_input]
+            
+            # TEMPORARY MOCK LOGIC for demonstration:
+            mock_database = {"ABCDEF": "Maitri Singh", "RWAILW": "Rajesh Kumar"}
+            
+            if hrms_input in mock_database:
+                st.session_state.found_emp_name = mock_database[hrms_input]
+                st.session_state.hrms_verified = True
+                st.success(f"✅ Employee Found: {st.session_state.found_emp_name}")
+            else:
+                st.session_state.hrms_verified = False
+                st.error("❌ HRMS ID not found in database.")
+        else:
+            st.error("⚠️ Invalid Format! Please enter exactly 6 CAPITAL alphabets.")
+
+    # --- CONDITIONAL FORM DISPLAY ---
+    if st.session_state.hrms_verified:
+        st.markdown("---")
+        st.info(f"Logging grievance for: **{st.session_state.found_emp_name}**")
+        
+        # This is where the rest of the form will appear
+        st.write("Rest of the grievance form will appear here...")
+        
+        # Placeholder for final submit
+        if st.button("Final Submit"):
+            st.toast("Form Submitted!")
+
+    # Navigation Back
     if st.button("⬅️ Back to Home"):
+        # Reset verification state when leaving
+        st.session_state.hrms_verified = False
         go_to('landing')
