@@ -436,10 +436,10 @@ elif st.session_state.page == 'admin_dashboard':
                             ws_g.update_cell(cell.row, 11, "UNDER PROCESS")
                             ws_g.update_cell(cell.row, 12, sel) # Col 12: Name
                             ws_g.update_cell(cell.row, 13, now) # Col 13: Date
-                            st.success("Assigned!")
+                            st.success("Grievance Officer Successfully Assigned!")
                             time.sleep(0.5)
                             st.rerun()
-                        except: st.error("Update Failed")
+                        except: st.error("Refresh Page to See Current Status")
                 else:
                     assign_date = row.get('ASSIGN_DATE', row.get('OFFICER_REMARK', 'N/A')) 
                     st.markdown(f"""
