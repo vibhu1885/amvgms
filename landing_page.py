@@ -39,14 +39,13 @@ st.set_page_config(page_title="GMS Alambagh", layout="wide")
 # Determine Container Width
 container_max_width = "1200px" if st.session_state.page == 'admin_dashboard' else "480px"
 
-# CSS ENGINE
 st.markdown(f"""
 <style>
-    /* HIDE DEFAULT ELEMENTS */
+    /* HIDE DEFAULT HEADER/FOOTER */
     header, footer, [data-testid="stHeader"] {{ visibility: hidden; height: 0; }}
     .stApp {{ background-color: {APP_BG_COLOR}; }}
 
-    /* MAIN CONTAINER LOCK */
+    /* 1. MAIN CONTAINER LOCK */
     .block-container {{
         max-width: {container_max_width} !important;
         padding-top: 2rem !important;
@@ -55,15 +54,22 @@ st.markdown(f"""
         margin: 0 auto !important;
     }}
 
-    /* LOGO & HEADING ALIGNMENT */
+    /* 2. LOGO ALIGNMENT */
     [data-testid="stImage"] {{ display: flex; justify-content: center; width: 100%; margin-bottom: 15px; }}
     [data-testid="stImage"] img {{ margin: 0 auto; }}
-    
+
+    /* 3. HEADINGS */
     .hindi-heading {{ text-align: center; color: white; font-weight: 900; font-size: 22px; margin-bottom: 5px; width: 100%; }}
     .english-heading {{ text-align: center; color: white; font-weight: bold; font-size: 18px; margin-bottom: 30px; width: 100%; }}
     .welcome-msg {{ text-align: center; color: #fca311; font-weight: 900; font-size: 24px; margin-bottom: 25px; width: 100%; }}
 
-    /* STANDARD BUTTONS (Landing, Login, etc.) */
+    /* 4. INPUTS */
+    .stTextInput label, .stSelectbox label, .stTextArea label {{
+        color: white !important; font-weight: bold !important; text-align: left !important; display: block !important; width: 100%;
+    }}
+    .stTextInput, .stSelectbox, .stTextArea {{ width: 100% !important; }}
+
+    /* 5. STANDARD BUTTONS (Strict 300px) */
     div.stButton > button {{
         background-color: #faf9f9;
         color: #131419;
@@ -73,57 +79,31 @@ st.markdown(f"""
         height: 70px;
         font-weight: 900;
         font-size: 18px;
-        margin: 10px auto; /* Centered */
+        margin: 10px auto; 
         display: block;
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }}
-    div.stButton > button p {{ font-weight: 900 !important; }}
-
-    /* ============================================================
-       ADMIN DASHBOARD SPECIFIC STYLING (THE COLOR FIX)
-       We target buttons based on which column they sit in.
-    ============================================================ */
     
-    /* Column 1: TOTAL (Keep White) */
-    [data-testid="column"]:nth-of-type(1) div.stButton > button {{
-        border-color: white !important;
-        color: #131419 !important;
+    /* 6. ADMIN SCORECARDS (HTML/CSS) */
+    .score-container {{
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
     }}
-
-    /* Column 2: NEW (Blue) */
-    [data-testid="column"]:nth-of-type(2) div.stButton > button {{
-        background-color: #3498db !important;
-        color: white !important;
-        border-color: #2980b9 !important;
+    .score-card {{
+        flex: 1;
+        min-width: 120px;
+        padding: 15px;
+        border-radius: 12px;
+        text-align: center;
+        color: #131419;
+        font-weight: 900;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     }}
-
-    /* Column 3: PROCESS (Yellow) */
-    [data-testid="column"]:nth-of-type(3) div.stButton > button {{
-        background-color: #f1c40f !important;
-        color: #131419 !important;
-        border-color: #f39c12 !important;
-    }}
-
-    /* Column 4: RESOLVED (Green) */
-    [data-testid="column"]:nth-of-type(4) div.stButton > button {{
-        background-color: #2ecc71 !important;
-        color: white !important;
-        border-color: #27ae60 !important;
-    }}
-    
-    /* Reset Width for Admin Filter Buttons to fit grid */
-    [data-testid="column"] div.stButton > button {{
-        width: 100% !important; /* Fill the column width */
-        min-width: 50px !important;
-        height: 60px !important;
-        margin: 0 !important;
-    }}
-
-    /* INPUT STYLING */
-    .stTextInput label, .stSelectbox label, .stTextArea label {{
-        color: white !important; font-weight: bold !important; text-align: left !important; display: block !important;
-    }}
-    .stTextInput, .stSelectbox, .stTextArea {{ width: 100% !important; }}
+    .score-number {{ font-size: 28px; line-height: 1.2; }}
+    .score-label {{ font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }}
 
 </style>
 """, unsafe_allow_html=True)
@@ -279,22 +259,47 @@ elif st.session_state.page == 'admin_dashboard':
     ws_g = get_sheet("GRIEVANCE")
     df = pd.DataFrame(ws_g.get_all_records())
 
-    # --- COLOR CODED OVERSIGHT BUTTONS ---
+    # --- HTML SCORECARDS (The Color Fix) ---
     count_total = len(df)
     count_new = len(df[df['STATUS']=='NEW'])
     count_process = len(df[df['STATUS']=='UNDER PROCESS'])
     count_resolved = len(df[df['STATUS']=='RESOLVED'])
 
-    # These 4 columns trigger the CSS nth-of-type coloring logic defined above
-    c1, c2, c3, c4 = st.columns(4)
-    if c1.button(f"TOTAL\n({count_total})"): st.session_state.admin_filter = 'ALL'
-    if c2.button(f"NEW\n({count_new})"): st.session_state.admin_filter = 'NEW'
-    if c3.button(f"PROCESS\n({count_process})"): st.session_state.admin_filter = 'UNDER PROCESS'
-    if c4.button(f"RESOLVED\n({count_resolved})"): st.session_state.admin_filter = 'RESOLVED'
+    st.markdown(f"""
+    <div class="score-container">
+        <div class="score-card" style="background-color: #3498db; color: white;">
+            <div class="score-number">{count_new}</div>
+            <div class="score-label">NEW</div>
+        </div>
+        <div class="score-card" style="background-color: #f1c40f;">
+            <div class="score-number">{count_process}</div>
+            <div class="score-label">PROCESS</div>
+        </div>
+        <div class="score-card" style="background-color: #2ecc71; color: white;">
+            <div class="score-number">{count_resolved}</div>
+            <div class="score-label">RESOLVED</div>
+        </div>
+        <div class="score-card" style="background-color: white;">
+            <div class="score-number">{count_total}</div>
+            <div class="score-label">TOTAL</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.caption(f"Showing: **{st.session_state.admin_filter}**")
+    # --- FILTER CONTROL ---
+    st.write("### 🔽 Filter Grievances")
+    filter_choice = st.radio(
+        "Select Status:", 
+        options=["ALL", "NEW", "UNDER PROCESS", "RESOLVED"],
+        horizontal=True,
+        index=0 if st.session_state.admin_filter == 'ALL' else 
+              1 if st.session_state.admin_filter == 'NEW' else
+              2 if st.session_state.admin_filter == 'UNDER PROCESS' else 3
+    )
+    # Sync visual filter with session state
+    st.session_state.admin_filter = filter_choice
 
-    # Filter Data
+    # Apply Filter
     f_df = df.copy()
     if st.session_state.admin_filter != 'ALL':
         f_df = f_df[f_df['STATUS'] == st.session_state.admin_filter]
@@ -326,7 +331,6 @@ elif st.session_state.page == 'admin_dashboard':
                     if sel != "Select Officer":
                         now = datetime.now().strftime("%d-%m-%Y %H:%M")
                         try:
-                            # Strict Row Finding to prevent misalignment
                             cell = ws_g.find(str(row['REFERENCE_NO']))
                             ws_g.update_cell(cell.row, 11, "UNDER PROCESS")
                             ws_g.update_cell(cell.row, 12, f"Marked to: {sel} at {now}")
