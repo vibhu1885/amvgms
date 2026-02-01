@@ -16,12 +16,12 @@ LABEL_COLOR = "#FFFFFF"
 # 3. Button Master Controls (SIZE & LOOK)
 BTN_HEIGHT = "70px"        # <--- Control button height here
 BTN_WIDTH = "300px"         # <--- Control button width relative to 480px
-BTN_BG_COLOR = "#2D2D2D"
+BTN_BG_COLOR = "f1faee"
 BTN_TEXT_COLOR = "#FFFFFF"
 BTN_BORDER_COLOR = "#fca311"
 BTN_BORDER_WIDTH = "2px"
 BTN_ROUNDNESS = "25px"
-BTN_HOVER_COLOR = "#8ed817"
+BTN_HOVER_COLOR = "#a7c957"
 BTN_TEXT_SIZE = "28px"
 BTN_FONT_WEIGHT = 900
 
