@@ -69,7 +69,7 @@ custom_css = f"""
         display: flex !important;
         justify-content: center !important;
         width: 100% !important;
-        margin-bottom: 10px !important;
+        margin-bottom: 6px !important;
     }}
 
     /* 5. Button Alignment and Sizing */
