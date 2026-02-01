@@ -36,60 +36,51 @@ st.set_page_config(page_title="GMS Alambagh", layout="centered")
 
 custom_css = f"""
 <style>
-    /* Hide Streamlit elements */
-    header, footer, #tabs-b6-tab-0, [data-testid="stHeader"] {{
+    /* 1. Hide default Streamlit overhead */
+    header, footer, [data-testid="stHeader"] {{
         visibility: hidden;
         height: 0;
     }}
 
-    /* Force background and remove padding from main container */
+    /* 2. Global Background */
     .stApp {{
         background-color: {APP_BG_COLOR};
     }}
 
-    /* The Main Center Logic */
+    /* 3. Main Container: Horizontal Center & Top Align */
     .block-container {{
         max-width: 480px !important;
-        padding: 0 !important;
-        height: 100vh !important;
-        display: flex !important;
-        align-items: center !important; /* Vertical center */
-        justify-content: center !important; /* Horizontal center */
+        padding: 2rem 1rem !important; /* Adjust top padding here */
+        margin: 0 auto !important;
+        display: block !important;
     }}
 
-    /* This wrapper ensures all elements inside are stacked vertically */
-    .center-wrapper {{
-        width: 100%;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }}
-
-    /* Global Label Styling */
+    /* 4. Global Label Styling */
     label, p, .stMarkdown {{
         color: {LABEL_COLOR} !important;
         font-size: {LABEL_FONT_SIZE};
+        text-align: center !important;
     }}
 
-    /* Heading Styles */
+    /* 5. Heading Styles */
     .hindi-heading {{
         color: {HEADING_COLOR};
         font-size: {HEADING_FONT_SIZE_HI};
         font-weight: bold;
+        text-align: center;
         line-height: 1.3;
-        margin: 15px 0 5px 0;
+        margin: 10px 0 5px 0;
     }}
     
     .english-heading {{
         color: {HEADING_COLOR};
         font-size: {HEADING_FONT_SIZE_EN};
         font-weight: bold;
+        text-align: center;
         margin-bottom: 30px;
     }}
 
-    /* BUTTON MASTER STYLING */
+    /* 6. BUTTON MASTER STYLING */
     div.stButton > button {{
         background-color: {BTN_BG_COLOR} !important;
         color: {BTN_TEXT_COLOR} !important;
@@ -108,11 +99,16 @@ custom_css = f"""
         border-color: {BTN_TEXT_COLOR} !important;
     }}
 
-    /* Center Logo inside the wrapper */
-    .logo-container {{
+    /* 7. Center Logo specifically */
+    [data-testid="stImage"] {{
         display: flex;
         justify-content: center;
-        width: 100%;
+        margin-bottom: 5px;
+    }}
+
+    /* Center text inputs and areas */
+    [data-testid="stTextInput"], [data-testid="stTextArea"] {{
+        text-align: center;
     }}
 </style>
 """
@@ -128,53 +124,49 @@ def go_to(page_name):
     st.session_state.page = page_name
 
 # ==========================================
-# MAIN APP WRAPPER (This forces centering)
+# PAGE LOGIC
 # ==========================================
-with st.container():
-    # Start the custom div wrapper
-    st.markdown('<div class="center-wrapper">', unsafe_allow_html=True)
 
-    # --- PAGE 1: LANDING ---
-    if st.session_state.page == 'landing':
-        if os.path.exists(LOGO_PATH):
-            st.image(LOGO_PATH, width=LOGO_WIDTH)
-        
-        st.markdown(f'<div class="hindi-heading">सवारी डिब्बा कारखाना,<br>आलमबाग, लखनऊ.</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
-        
-        if st.button("नया Grievance दर्ज करें"):
-            go_to('new_form')
+# --- PAGE 1: LANDING ---
+if st.session_state.page == 'landing':
+    # Logo at the very top
+    if os.path.exists(LOGO_PATH):
+        st.image(LOGO_PATH, width=LOGO_WIDTH)
+    
+    # Headings
+    st.markdown(f'<div class="hindi-heading">सवारी डिब्बा कारखाना,<br>आलमबाग, लखनऊ.</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
+    
+    # Buttons
+    if st.button("नया Grievance दर्ज करें"):
+        go_to('new_form')
 
-        if st.button("पहले से दर्ज ग्रीवांस की वर्तमान स्थिति जानें"):
-            go_to('status_check')
+    if st.button("पहले से दर्ज ग्रीवांस की वर्तमान स्थिति जानें"):
+        go_to('status_check')
 
-        if st.button("Officer/ Admin Login"):
-            go_to('login')
+    if st.button("Officer/ Admin Login"):
+        go_to('login')
 
-    # --- PAGE 2: NEW FORM ---
-    elif st.session_state.page == 'new_form':
-        st.markdown('<div class="hindi-heading">नया विवरण भरें</div>', unsafe_allow_html=True)
-        # Note: Form fields stay centered because of the wrapper
-        st.text_input("नाम (Name)")
-        if st.button("Submit"):
-            pass
-        if st.button("← Back"):
-            go_to('landing')
+# --- PAGE 2: NEW FORM ---
+elif st.session_state.page == 'new_form':
+    st.markdown('<div class="hindi-heading">नया विवरण भरें</div>', unsafe_allow_html=True)
+    st.text_input("अपना नाम लिखें")
+    if st.button("Submit"):
+        pass
+    if st.button("← Back"):
+        go_to('landing')
 
-    # --- PAGE 3: STATUS ---
-    elif st.session_state.page == 'status_check':
-        st.markdown('<div class="hindi-heading">स्थिति जांचें</div>', unsafe_allow_html=True)
-        st.text_input("Grievance ID")
-        if st.button("← Back"):
-            go_to('landing')
+# --- PAGE 3: STATUS ---
+elif st.session_state.page == 'status_check':
+    st.markdown('<div class="hindi-heading">स्थिति जांचें</div>', unsafe_allow_html=True)
+    st.text_input("Grievance ID दर्ज करें")
+    if st.button("← Back"):
+        go_to('landing')
 
-    # --- PAGE 4: LOGIN ---
-    elif st.session_state.page == 'login':
-        st.markdown('<div class="hindi-heading">Login</div>', unsafe_allow_html=True)
-        st.text_input("Admin ID")
-        st.text_input("Password", type="password")
-        if st.button("← Back"):
-            go_to('landing')
-
-    # End the custom div wrapper
-    st.markdown('</div>', unsafe_allow_html=True)
+# --- PAGE 4: LOGIN ---
+elif st.session_state.page == 'login':
+    st.markdown('<div class="hindi-heading">Officer Login</div>', unsafe_allow_html=True)
+    st.text_input("Admin ID")
+    st.text_input("Password", type="password")
+    if st.button("← Back"):
+        go_to('landing')
