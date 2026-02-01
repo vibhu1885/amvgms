@@ -84,7 +84,7 @@ logo_tag = f'<img src="data:image/png;base64,{logo_data}" style="width:{LOGO_SIZ
 st.markdown(f'<div class="header-container">{logo_tag}<div class="custom-header">{H_TEXT}</div></div>', unsafe_allow_html=True)
 
 if st.button("📝 नया Grievance दर्ज करें"):
-    st.switch_page("pages/1_Registration.py")
+    st.switch_page("https://github.com/vibhu1885/amvgms/blob/main/pages/1_Registration.py")
 
 if st.button("🔍 Grievance की स्थिति देखें"):
     st.switch_page("pages/3_Status_Login.py")
