@@ -52,8 +52,8 @@ custom_css = f"""
         margin: 0 auto !important;
         display: flex !important;
         flex-direction: column !important;
-        align-items: center !important; /* Horizontal Center */
-        justify-content: flex-start !important; /* Vertical Top */
+        align-items: center !important; 
+        justify-content: flex-start !important; 
     }}
 
     /* 3. Center every single child element within the main block */
@@ -84,17 +84,20 @@ custom_css = f"""
         color: {BTN_TEXT_COLOR} !important;
         border: {BTN_BORDER_WIDTH} solid {BTN_BORDER_COLOR} !important;
         border-radius: {BTN_ROUNDNESS} !important;
-        width: 90% !important; /* Adjust width relative to the 480px container */
-        padding: 15px 0px !important;
+        width: 95% !important; 
+        padding: 18px 10px !important; /* Increased padding for better touch targets */
         font-size: {BTN_TEXT_SIZE} !important;
         font-weight: {BTN_FONT_WEIGHT} !important;
-        margin: 10px 0px !important;
-        transition: 0.3s ease;
+        margin: 12px 0px !important;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3); /* Subtle shadow for depth */
     }}
 
     div.stButton > button:hover {{
         background-color: {BTN_HOVER_COLOR} !important;
         border-color: {BTN_TEXT_COLOR} !important;
+        transform: translateY(-2px); /* Slight lift effect */
+        box-shadow: 0 6px 12px rgba(79, 139, 249, 0.4);
     }}
 
     /* 6. Text and Heading Centering */
@@ -147,30 +150,30 @@ if st.session_state.page == 'landing':
     st.markdown(f'<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
     
-    # Buttons - Now strictly aligned to the center axis of the headers
-    if st.button("नया Grievance दर्ज करें"):
+    # Buttons with Emojis
+    if st.button("📝 नया Grievance दर्ज करें"):
         go_to('new_form')
 
-    if st.button("पहले से दर्ज ग्रीवांस की वर्तमान स्थिति जानें"):
+    if st.button("🔍 ग्रीवांस की वर्तमान स्थिति जानें"):
         go_to('status_check')
 
-    if st.button("Officer/ Admin Login"):
+    if st.button("🔐 Officer/ Admin Login"):
         go_to('login')
 
 elif st.session_state.page == 'new_form':
     st.markdown('<div class="hindi-heading">विवरण दर्ज करें</div>', unsafe_allow_html=True)
     st.text_input("Grievance Category")
-    if st.button("← Back"):
+    if st.button("⬅️ Back to Home"):
         go_to('landing')
 
 elif st.session_state.page == 'status_check':
     st.markdown('<div class="hindi-heading">स्थिति जांचें</div>', unsafe_allow_html=True)
     st.text_input("Token Number")
-    if st.button("← Back"):
+    if st.button("⬅️ Back to Home"):
         go_to('landing')
 
 elif st.session_state.page == 'login':
     st.markdown('<div class="hindi-heading">Admin</div>', unsafe_allow_html=True)
     st.text_input("Password", type="password")
-    if st.button("← Back"):
+    if st.button("⬅️ Back to Home"):
         go_to('landing')
