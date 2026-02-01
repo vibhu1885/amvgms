@@ -2,7 +2,7 @@ import streamlit as st
 import os
 import pandas as pd
 import time
-import pytz  # Added for Timezone handling
+import pytz
 from datetime import datetime
 from google.oauth2.service_account import Credentials
 import gspread
@@ -20,6 +20,7 @@ if 'hrms_verified' not in st.session_state: st.session_state.hrms_verified = Fal
 if 'super_verified' not in st.session_state: st.session_state.super_verified = False
 if 'active_super' not in st.session_state: st.session_state.active_super = {}
 if 'admin_filter' not in st.session_state: st.session_state.admin_filter = 'ALL'
+if 'officer_filter' not in st.session_state: st.session_state.officer_filter = 'ALL'
 
 # --- TIMEZONE HELPER ---
 def get_ist_time():
@@ -48,7 +49,9 @@ def get_sheet(sheet_name):
 # ==========================================
 st.set_page_config(page_title="GMS Alambagh", layout="wide")
 
-container_max_width = "1200px" if st.session_state.page == 'admin_dashboard' else "480px"
+# Container Logic: Wide for Dashboards, Narrow for Forms
+is_dashboard = st.session_state.page in ['admin_dashboard', 'officer_dashboard']
+container_max_width = "1200px" if is_dashboard else "480px"
 
 st.markdown(f"""
 <style>
@@ -78,7 +81,7 @@ st.markdown(f"""
     }}
     .stTextInput, .stSelectbox, .stTextArea {{ width: 100% !important; }}
 
-    /* 5. BUTTONS (RESTORED EFFECTS) */
+    /* 5. BUTTONS (300px Fixed) */
     div.stButton > button {{
         background-color: #faf9f9 !important;
         color: #131419 !important;
@@ -110,7 +113,7 @@ st.markdown(f"""
         margin: 0 !important; 
     }}
     
-    /* 6. ADMIN SCORECARDS */
+    /* 6. SCORECARDS */
     .score-container {{ display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }}
     .score-card {{
         flex: 1; min-width: 150px; padding: 15px; border-radius: 12px; text-align: center;
@@ -119,7 +122,7 @@ st.markdown(f"""
     .score-number {{ font-size: 28px; line-height: 1.2; }}
     .score-label {{ font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }}
 
-    /* 7. ADMIN TABLE ROW STYLING */
+    /* 7. TABLE ROW STYLING */
     .detail-label {{ color: #fca311; font-weight: bold; font-size: 14px; }}
     .detail-val {{ color: white; font-weight: normal; font-size: 14px; margin-bottom: 5px; }}
 
@@ -134,7 +137,6 @@ def go_to(page):
     st.rerun()
 
 def generate_ref_no(hrms_id, df_grievance):
-    # USE IST DATE FOR REF NO
     date_str = get_ist_date_str()
     count = 1
     if not df_grievance.empty and 'HRMS_ID' in df_grievance.columns:
@@ -197,12 +199,10 @@ elif st.session_state.page == 'new_form':
                     ws = get_sheet("GRIEVANCE")
                     df_g = pd.DataFrame(ws.get_all_records())
                     ref_no = generate_ref_no(st.session_state.active_hrms, df_g)
-                    
-                    # USE IST TIME FOR REGISTRATION
                     now_ist = get_ist_time()
-                    
                     new_row = [ref_no, now_ist, st.session_state.active_hrms, st.session_state.found_emp_name, 
-                               emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "NEW", "N/A", "N/A"]
+                               emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "NEW", "N/A", "N/A", "N/A", "N/A"]
+                    # N/A placeholders for: Marked Officer, Assign Date, Officer Remark, Resolve Date
                     ws.append_row(new_row)
                     st.success(f"✅ Registered! Ref No: {ref_no}")
                     st.balloons()
@@ -228,7 +228,7 @@ elif st.session_state.page == 'status_check':
                 if not match.empty:
                     res = match.iloc[0]
                     st.info(f"**Status:** {res['STATUS']}")
-                    st.write(f"**Remark:** {res['OFFICER_REMARK']}")
+                    st.write(f"**Remark:** {res.get('OFFICER_REMARK', 'N/A')}")
                 else: st.error("❌ Not Found")
             except: st.error("Error fetching data.")
     
@@ -279,7 +279,7 @@ elif st.session_state.page == 'admin_dashboard':
     ws_g = get_sheet("GRIEVANCE")
     df = pd.DataFrame(ws_g.get_all_records())
 
-    # --- SCORECARDS ---
+    # Scorecards
     count_total = len(df)
     count_new = len(df[df['STATUS']=='NEW'])
     count_process = len(df[df['STATUS']=='UNDER PROCESS'])
@@ -288,103 +288,162 @@ elif st.session_state.page == 'admin_dashboard':
     st.markdown(f"""
     <div class="score-container">
         <div class="score-card" style="background-color: #3498db; color: white;">
-            <div class="score-number">{count_new}</div>
-            <div class="score-label">NEW</div>
+            <div class="score-number">{count_new}</div><div class="score-label">NEW</div>
         </div>
         <div class="score-card" style="background-color: #f1c40f;">
-            <div class="score-number">{count_process}</div>
-            <div class="score-label">UNDER PROCESS</div>
+            <div class="score-number">{count_process}</div><div class="score-label">UNDER PROCESS</div>
         </div>
         <div class="score-card" style="background-color: #2ecc71; color: white;">
-            <div class="score-number">{count_resolved}</div>
-            <div class="score-label">RESOLVED</div>
+            <div class="score-number">{count_resolved}</div><div class="score-label">RESOLVED</div>
         </div>
         <div class="score-card" style="background-color: white;">
-            <div class="score-number">{count_total}</div>
-            <div class="score-label">TOTAL</div>
+            <div class="score-number">{count_total}</div><div class="score-label">TOTAL</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # --- FILTER ---
+    # Filter
     st.write("### 🔽 Filter Data")
-    filter_choice = st.radio(
-        "View Status:", 
-        options=["ALL", "NEW", "UNDER PROCESS", "RESOLVED"],
-        horizontal=True
-    )
-    
+    filter_choice = st.radio("View Status:", options=["ALL", "NEW", "UNDER PROCESS", "RESOLVED"], horizontal=True, key="admin_rad")
     f_df = df.copy()
-    if filter_choice != 'ALL':
-        f_df = f_df[f_df['STATUS'] == filter_choice]
+    if filter_choice != 'ALL': f_df = f_df[f_df['STATUS'] == filter_choice]
 
-    # --- ACTION TABLE ---
+    # Table
     off_df = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
     officers = ["Select Officer"] + [f"{r['NAME']} ({r['RANK']})" for _, r in off_df[off_df['ROLE'].isin(['OFFICER', 'BOTH'])].iterrows()]
 
     st.markdown("---")
-    
-    if f_df.empty:
-        st.info("No records found.")
+    if f_df.empty: st.info("No records found.")
     else:
         for i, row in f_df.iterrows():
             with st.container():
-                # HEADER ROW
-                c_h1, c_h2, c_h3 = st.columns([2, 4, 2])
+                c1, c2, c3 = st.columns([2, 4, 2])
                 color = "#3498db" if row['STATUS'] == "NEW" else "#f1c40f" if row['STATUS'] == "UNDER PROCESS" else "#2ecc71"
-                c_h1.markdown(f"**Ref:** `{row['REFERENCE_NO']}`")
-                c_h2.markdown(f"**Status:** <span style='color:{color}; font-weight:bold;'>{row['STATUS']}</span>", unsafe_allow_html=True)
-                c_h3.markdown(f"📅 {row['DATE_TIME']}")
+                c1.markdown(f"**Ref:** `{row['REFERENCE_NO']}`")
+                c2.markdown(f"**Status:** <span style='color:{color}; font-weight:bold;'>{row['STATUS']}</span>", unsafe_allow_html=True)
+                c3.markdown(f"📅 {row['DATE_TIME']}")
                 
-                # DETAILS
-                d1, d2, d3 = st.columns([3, 3, 3])
-                with d1:
-                    st.markdown(f"<span class='detail-label'>Name:</span> <span class='detail-val'>{row['EMP_NAME']}</span>", unsafe_allow_html=True)
-                    st.markdown(f"<span class='detail-label'>HRMS:</span> <span class='detail-val'>{row['HRMS_ID']}</span>", unsafe_allow_html=True)
-                    st.markdown(f"<span class='detail-label'>Emp No:</span> <span class='detail-val'>{row['EMP_NO']}</span>", unsafe_allow_html=True)
-
-                with d2:
-                    st.markdown(f"<span class='detail-label'>Designation:</span> <span class='detail-val'>{row['DESIGNATION']}</span>", unsafe_allow_html=True)
-                    st.markdown(f"<span class='detail-label'>Trade:</span> <span class='detail-val'>{row['TRADE']}</span>", unsafe_allow_html=True)
-                    st.markdown(f"<span class='detail-label'>Section:</span> <span class='detail-val'>{row['SECTION']}</span>", unsafe_allow_html=True)
+                d1, d2, d3 = st.columns(3)
+                d1.markdown(f"Name: **{row['EMP_NAME']}**<br>HRMS: {row['HRMS_ID']}", unsafe_allow_html=True)
+                d2.markdown(f"Desig: {row['DESIGNATION']}<br>Section: {row['SECTION']}", unsafe_allow_html=True)
+                d3.markdown(f"Type: {row['GRIEVANCE_TYPE']}", unsafe_allow_html=True)
                 
-                with d3:
-                    st.markdown(f"<span class='detail-label'>Grievance Type:</span> <span class='detail-val'>{row['GRIEVANCE_TYPE']}</span>", unsafe_allow_html=True)
+                st.info(f"**Description:** {row['GRIEVANCE_TEXT']}")
 
-                # DESCRIPTION
-                st.markdown(f"<span class='detail-label'>Description:</span>", unsafe_allow_html=True)
-                st.info(f"{row['GRIEVANCE_TEXT']}")
-
-                # ACTION / DISPLAY LOGIC
                 if row['STATUS'] == "NEW":
-                    act_col, _ = st.columns([4, 4])
-                    sel = act_col.selectbox("Assign To:", officers, key=f"adm_{i}")
+                    sel = st.selectbox("Assign To:", officers, key=f"adm_{i}")
                     if sel != "Select Officer":
-                        # USE IST TIME FOR ASSIGNMENT
-                        now_ist = get_ist_time()
                         try:
-                            # 1. Update Sheet
+                            now = get_ist_time()
                             cell = ws_g.find(str(row['REFERENCE_NO']))
                             ws_g.update_cell(cell.row, 11, "UNDER PROCESS")
-                            ws_g.update_cell(cell.row, 12, sel) # Name
-                            ws_g.update_cell(cell.row, 13, now_ist) # Time
+                            ws_g.update_cell(cell.row, 12, sel) # Col 12: Name
+                            ws_g.update_cell(cell.row, 13, now) # Col 13: Date
                             st.success("Assigned!")
                             time.sleep(0.5)
                             st.rerun()
                         except: st.error("Update Failed")
                 else:
-                    # CHECK FOR ASSIGN_DATE, fallback to OFFICER_REMARK if legacy data
-                    assign_date = row.get('ASSIGN_DATE', row.get('OFFICER_REMARK', 'N/A'))
+                    assign_date = row.get('ASSIGN_DATE', row.get('OFFICER_REMARK', 'N/A')) # Compatibility
+                    st.markdown(f"**Assigned To:** {row['MARKED_OFFICER']} | **Date:** {assign_date}")
+                st.markdown("---")
+
+    if st.button("🚪 Logout"):
+        st.session_state.super_verified = False
+        go_to('landing')
+
+# --- PAGE 6: OFFICER DASHBOARD ---
+elif st.session_state.page == 'officer_dashboard':
+    st.markdown('<div class="hindi-heading" style="font-size:35px;">Officer Dashboard</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="welcome-msg">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
+
+    # 1. Identity Check
+    my_name_rank = f"{st.session_state.active_super['NAME']} ({st.session_state.active_super['RANK']})"
+    
+    ws_g = get_sheet("GRIEVANCE")
+    df = pd.DataFrame(ws_g.get_all_records())
+
+    # 2. Filter My Grievances
+    my_df = df[df['MARKED_OFFICER'] == my_name_rank]
+
+    # 3. Scorecards
+    cnt_total = len(my_df)
+    cnt_pending = len(my_df[my_df['STATUS']=='UNDER PROCESS'])
+    cnt_resolved = len(my_df[my_df['STATUS']=='RESOLVED'])
+
+    st.markdown(f"""
+    <div class="score-container">
+        <div class="score-card" style="background-color: white;">
+            <div class="score-number">{cnt_total}</div><div class="score-label">TOTAL</div>
+        </div>
+        <div class="score-card" style="background-color: #f1c40f;">
+            <div class="score-number">{cnt_pending}</div><div class="score-label">PENDING</div>
+        </div>
+        <div class="score-card" style="background-color: #2ecc71; color: white;">
+            <div class="score-number">{cnt_resolved}</div><div class="score-label">RESOLVED</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 4. Filter
+    st.write("### 🔽 Filter My Tasks")
+    off_filter = st.radio("Show:", ["ALL", "PENDING", "RESOLVED"], horizontal=True, key="off_rad")
+    
+    view_df = my_df.copy()
+    if off_filter == "PENDING": view_df = view_df[view_df['STATUS'] == 'UNDER PROCESS']
+    elif off_filter == "RESOLVED": view_df = view_df[view_df['STATUS'] == 'RESOLVED']
+
+    # 5. Table & Action
+    st.markdown("---")
+    if view_df.empty: st.info("No tasks found.")
+    else:
+        for i, row in view_df.iterrows():
+            with st.container():
+                # Header
+                c1, c2, c3 = st.columns([2, 4, 2])
+                color = "#f1c40f" if row['STATUS'] == "UNDER PROCESS" else "#2ecc71"
+                c1.markdown(f"**Ref:** `{row['REFERENCE_NO']}`")
+                c2.markdown(f"**Status:** <span style='color:{color}; font-weight:bold;'>{row['STATUS']}</span>", unsafe_allow_html=True)
+                c3.markdown(f"📅 Assigned: {row.get('ASSIGN_DATE', 'N/A')}")
+
+                # Details
+                d1, d2, d3 = st.columns(3)
+                d1.markdown(f"Name: **{row['EMP_NAME']}**<br>HRMS: {row['HRMS_ID']}", unsafe_allow_html=True)
+                d2.markdown(f"Desig: {row['DESIGNATION']}<br>Section: {row['SECTION']}", unsafe_allow_html=True)
+                d3.markdown(f"Type: {row['GRIEVANCE_TYPE']}", unsafe_allow_html=True)
+                
+                st.info(f"**Issue:** {row['GRIEVANCE_TEXT']}")
+
+                # RESOLVE ACTION
+                if row['STATUS'] == "UNDER PROCESS":
+                    rem_key = f"rem_{i}"
+                    # Mandatory Text Box
+                    remark = st.text_area("Resolution Remarks (Mandatory)*", key=rem_key)
                     
+                    if st.button("✅ Mark as Resolved", key=f"btn_{i}"):
+                        if not remark.strip():
+                            st.error("⚠️ Please enter resolution remarks.")
+                        else:
+                            try:
+                                now_ist = get_ist_time()
+                                cell = ws_g.find(str(row['REFERENCE_NO']))
+                                # Update Columns: 
+                                # 11=Status, 14=Officer Remark, 15=Resolve Date
+                                ws_g.update_cell(cell.row, 11, "RESOLVED")
+                                ws_g.update_cell(cell.row, 14, remark)
+                                ws_g.update_cell(cell.row, 15, now_ist)
+                                st.success("Resolved Successfully!")
+                                time.sleep(0.5)
+                                st.rerun()
+                            except: st.error("Update Error")
+                else:
+                    # Show Resolution Details
                     st.markdown(f"""
-                    <div style="background-color: #2c2e3a; padding: 10px; border-radius: 8px; border: 1px solid #444;">
-                        <span style="color: #fca311; font-weight: bold;">Assigned To:</span> 
-                        <span style="color: white; font-weight: bold;">{row['MARKED_OFFICER']}</span>
-                        <span style="color: #fca311; font-weight: bold; margin-left: 15px;">Assign Date:</span> 
-                        <span style="color: white;">{assign_date}</span>
+                    <div style="background-color: #2c2e3a; padding: 10px; border-radius: 8px;">
+                        <span style="color: #2ecc71; font-weight: bold;">Resolution:</span> {row.get('OFFICER_REMARK', 'N/A')}<br>
+                        <span style="color: #2ecc71; font-weight: bold;">Date:</span> {row.get('RESOLVE_DATE', 'N/A')}
                     </div>
                     """, unsafe_allow_html=True)
-                
                 st.markdown("---")
 
     if st.button("🚪 Logout"):
@@ -395,8 +454,3 @@ elif st.session_state.page == 'role_selection':
     st.markdown('<div class="hindi-heading">Select Dashboard</div>', unsafe_allow_html=True)
     if st.button("🛠️ Admin Dashboard"): go_to('admin_dashboard')
     if st.button("📋 Officer Dashboard"): go_to('officer_dashboard')
-
-elif st.session_state.page == 'officer_dashboard':
-    st.markdown('<div class="hindi-heading">Officer Dashboard</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="welcome-msg">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
-    if st.button("🚪 Logout"): go_to('landing')
