@@ -45,10 +45,12 @@ custom_css = f"""
         background-color: {APP_BG_COLOR};
     }}
 
-    /* 2. Force the main container to be a top-aligned, centered column */
+    /* 2. Main Container: Fixed at 480px for mobile-view consistency */
     .block-container {{
         max-width: 480px !important;
         padding-top: 2rem !important;
+        padding-left: 10px !important; /* Tiny gutter so they don't hit the screen edge */
+        padding-right: 10px !important;
         margin: 0 auto !important;
         display: flex !important;
         flex-direction: column !important;
@@ -56,7 +58,7 @@ custom_css = f"""
         justify-content: flex-start !important; 
     }}
 
-    /* 3. Center every single child element within the main block */
+    /* 3. Center every vertical block */
     [data-testid="stVerticalBlock"] {{
         width: 100% !important;
         display: flex !important;
@@ -72,7 +74,7 @@ custom_css = f"""
         margin-bottom: 6px !important;
     }}
 
-    /* 5. Button Alignment and Sizing */
+    /* 5. FULL WIDTH BUTTON STYLING */
     .stButton {{
         width: 100% !important;
         display: flex !important;
@@ -84,19 +86,23 @@ custom_css = f"""
         color: {BTN_TEXT_COLOR} !important;
         border: {BTN_BORDER_WIDTH} solid {BTN_BORDER_COLOR} !important;
         border-radius: {BTN_ROUNDNESS} !important;
-        width: 95% !important; 
-        padding: 18px 10px !important; /* Increased padding for better touch targets */
+        
+        /* THE KEY CHANGE: MAX WIDTH */
+        width: 100% !important; 
+        max-width: 100% !important;
+        
+        padding: 18px 10px !important;
         font-size: {BTN_TEXT_SIZE} !important;
         font-weight: {BTN_FONT_WEIGHT} !important;
-        margin: 12px 0px !important;
+        margin: 10px 0px !important;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3); /* Subtle shadow for depth */
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }}
 
     div.stButton > button:hover {{
         background-color: {BTN_HOVER_COLOR} !important;
         border-color: {BTN_TEXT_COLOR} !important;
-        transform: translateY(-2px); /* Slight lift effect */
+        transform: translateY(-2px);
         box-shadow: 0 6px 12px rgba(79, 139, 249, 0.4);
     }}
 
@@ -120,9 +126,9 @@ custom_css = f"""
         margin-bottom: 20px;
     }}
 
-    /* 7. Input Field Centering */
+    /* 7. Input Field Centering - also made wider */
     [data-testid="stTextInput"], [data-testid="stTextArea"] {{
-        width: 90% !important;
+        width: 100% !important;
     }}
 </style>
 """
@@ -142,15 +148,12 @@ def go_to(page_name):
 # ==========================================
 
 if st.session_state.page == 'landing':
-    # Logo
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH, width=LOGO_WIDTH)
     
-    # Headings
     st.markdown(f'<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
     
-    # Buttons with Emojis
     if st.button("📝 नया Grievance दर्ज करें"):
         go_to('new_form')
 
