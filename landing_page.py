@@ -16,6 +16,7 @@ def get_sheet(sheet_name):
     creds_info = st.secrets["gcp_service_account"]
     creds = Credentials.from_service_account_info(creds_info, scopes=scope)
     client = gspread.authorize(creds)
+    # This will now look for the EXACT case-sensitive name
     return client.open("Grievance_DB").worksheet(sheet_name)
 
 # ==========================================
@@ -35,13 +36,10 @@ BTN_TEXT_COLOR = "#131419"
 BTN_BORDER_COLOR = "#fca311"
 BTN_BORDER_WIDTH = "4px"
 BTN_ROUNDNESS = "22px"
-BTN_HOVER_COLOR = "#a7c957" # Greenish hover
+BTN_HOVER_COLOR = "#a7c957"
 BTN_TEXT_SIZE = "17px"     
 BTN_FONT_WEIGHT = "900"    
 
-# ==========================================
-# THE GLOBAL ALIGNMENT ENGINE (CSS)
-# ==========================================
 st.set_page_config(page_title="GMS Alambagh", layout="centered")
 
 custom_css = f"""
@@ -49,7 +47,6 @@ custom_css = f"""
     header, footer, [data-testid="stHeader"] {{ visibility: hidden; height: 0; }}
     .stApp {{ background-color: {APP_BG_COLOR}; }}
 
-    /* Main Container */
     .block-container {{
         max-width: 480px !important;
         padding-top: 1.5rem !important;
@@ -59,15 +56,7 @@ custom_css = f"""
         align-items: center !important; 
     }}
 
-    /* Vertical Block Alignment */
-    [data-testid="stVerticalBlock"] {{ 
-        width: 100% !important; 
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important; 
-    }}
-
-    /* BUTTON STYLING & HOVER FIX */
+    /* FIXED SMOOTH BUTTON ANIMATION & RESPONSIVENESS */
     .stButton {{ width: 100% !important; display: flex !important; justify-content: center !important; }}
 
     div.stButton > button {{
@@ -78,34 +67,31 @@ custom_css = f"""
         width: {BTN_WIDTH} !important; 
         max-width: 100% !important;
         height: {BTN_HEIGHT} !important;
-        margin: 10px 0px !important;
-        transition: all 0.3s ease-in-out !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        margin: 12px 0px !important;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.4);
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        overflow: hidden !important;
     }}
 
-    /* Explicit Hover State */
     div.stButton > button:hover {{
         background-color: {BTN_HOVER_COLOR} !important;
-        border-color: {BTN_TEXT_COLOR} !important;
-        color: {BTN_TEXT_COLOR} !important;
-        transform: scale(1.02) !important;
+        border-color: {BTN_BG_COLOR} !important;
+        transform: translateY(-4px) scale(1.03) !important;
+        box-shadow: 0 10px 20px rgba(167, 201, 87, 0.4) !important;
     }}
 
     div.stButton > button p {{ 
         font-size: {BTN_TEXT_SIZE} !important; 
         font-weight: {BTN_FONT_WEIGHT} !important; 
-        margin: 0 !important;
     }}
 
-    /* Text & Labels */
     .hindi-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: 900; text-align: center; }}
     .english-heading {{ color: {HEADING_COLOR}; font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center; }}
-    label {{ color: {LABEL_COLOR} !important; font-weight: bold; font-size: 15px; width: 100%; text-align: left; }}
-    
-    .err-msg {{ color: #FF4B4B; font-size: 13px; font-weight: bold; margin-top: -10px; margin-bottom: 10px; width: 100%; text-align: left; }}
+    label {{ color: {LABEL_COLOR} !important; font-weight: bold; font-size: 15px; text-align: left; width: 100%; display: block; }}
+    .err-msg {{ color: #FF4B4B; font-size: 13px; font-weight: bold; margin-top: -10px; margin-bottom: 10px; text-align: left; width: 100%; }}
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -119,6 +105,16 @@ if 'found_emp_name' not in st.session_state: st.session_state.found_emp_name = "
 
 def go_to(page_name):
     st.session_state.page = page_name
+
+# ==========================================
+# LOGIC: GENERATE UNIQUE REFERENCE (NO HYPHENS)
+# ==========================================
+def generate_ref_no(hrms_id, df_grievance):
+    date_str = datetime.now().strftime("%Y%m%d")
+    count = 1
+    if not df_grievance.empty and 'HRMS_ID' in df_grievance.columns:
+        count = len(df_grievance[df_grievance['HRMS_ID'] == hrms_id]) + 1
+    return f"{date_str}{hrms_id}{str(count).zfill(3)}"
 
 # ==========================================
 # PAGE CONTENT
@@ -139,16 +135,16 @@ elif st.session_state.page == 'new_form':
     st.markdown('<div class="english-heading">समस्या पंजीकरण</div>', unsafe_allow_html=True)
 
     if not st.session_state.hrms_verified:
-        hrms_id = st.text_input("Enter HRMS ID (अपनी HRMS ID दर्ज करें)*", max_chars=6, placeholder="HRMS ID").upper().strip()
+        hrms_input = st.text_input("Enter HRMS ID (अपनी HRMS ID दर्ज करें)*", max_chars=6, placeholder="HRMS ID").upper().strip()
         if st.button("Verify ID / सत्यापित करें"):
-            if len(hrms_id) == 6 and hrms_id.isalpha():
+            if len(hrms_input) == 6 and hrms_input.isalpha():
                 try:
                     df = pd.DataFrame(get_sheet("EMPLOYEE_MAPPING").get_all_records())
-                    match = df[df['HRMS_ID'] == hrms_id]
+                    match = df[df['HRMS_ID'] == hrms_input]
                     if not match.empty:
                         st.session_state.found_emp_name = match.iloc[0]['EMPLOYEE_NAME']
                         st.session_state.hrms_verified = True
-                        st.session_state.active_hrms = hrms_id
+                        st.session_state.active_hrms = hrms_input
                         st.rerun()
                     else: st.error("❌ HRMS ID not found.")
                 except Exception as e: st.error(f"Mapping Error: {e}")
@@ -156,7 +152,6 @@ elif st.session_state.page == 'new_form':
     
     else:
         st.success(f"✅ Employee Found: {st.session_state.found_emp_name}")
-        
         try:
             dd_df = pd.DataFrame(get_sheet("DROPDOWN_MAPPINGS").get_all_records())
             designations = ["Select"] + [x for x in dd_df['DESIGNATION_LIST'].dropna().unique().tolist() if x]
@@ -166,7 +161,6 @@ elif st.session_state.page == 'new_form':
             designations = trades = g_types = ["Select"]
 
         emp_name = st.text_input("Employee Name (कर्मचारी का नाम)*", value=st.session_state.found_emp_name, disabled=True)
-        
         emp_no = st.text_input("Employee Number (कर्मचारी संख्या)*")
         if not emp_no and 'tried_submit' in st.session_state: st.markdown('<p class="err-msg">⚠️ Required</p>', unsafe_allow_html=True)
 
@@ -188,18 +182,26 @@ elif st.session_state.page == 'new_form':
         if st.button("Grievance जमा करें।"):
             st.session_state.tried_submit = True
             if not any(x in [None, "", "Select"] for x in [emp_no, emp_desig, emp_trade, emp_sec, g_type, g_text]):
-                now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-                ref_no = "REF" + datetime.now().strftime("%y%m%d%H%M%S")
                 try:
-                    # NEW is the default status here
-                    new_row = [ref_no, now, st.session_state.active_hrms, st.session_state.found_emp_name, 
-                               emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "NEW", "N/A", "N/A"]
-                    get_sheet("grievance").append_row(new_row)
-                    st.success(f"Grievance Submitted! Ref No: {ref_no}")
+                    # UPDATED TO UPPERCASE SHEET NAME
+                    grievance_ws = get_sheet("GRIEVANCE") 
+                    df_grievance = pd.DataFrame(grievance_ws.get_all_records())
+                    
+                    now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+                    ref_no = generate_ref_no(st.session_state.active_hrms, df_grievance)
+                    
+                    # Columns Mapping (13 Columns Total)
+                    new_row = [
+                        ref_no, now, st.session_state.active_hrms, st.session_state.found_emp_name, 
+                        emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "NEW", "N/A", "N/A"
+                    ]
+                    
+                    grievance_ws.append_row(new_row)
+                    st.success(f"Registered! Your Ref No is: {ref_no}")
                     st.balloons()
                     st.session_state.hrms_verified = False
                     if 'tried_submit' in st.session_state: del st.session_state.tried_submit
-                except Exception as e: st.error(f"Submission Failed: {e}")
+                except Exception as e: st.error(f"Critical Error: {e}")
             else: st.rerun()
 
     if st.button("⬅️ Back to Home"):
@@ -210,19 +212,17 @@ elif st.session_state.page == 'new_form':
 # --- PAGE 3: STATUS CHECK ---
 elif st.session_state.page == 'status_check':
     st.markdown('<div class="hindi-heading">Grievance Status</div>', unsafe_allow_html=True)
-    st.markdown('<div class="english-heading">वर्तमान स्थिति जानें</div>', unsafe_allow_html=True)
-    ref_input = st.text_input("Enter Reference Number*", placeholder="REFXXXXXXXX").strip()
+    ref_input = st.text_input("Enter Reference Number*", placeholder="e.g. 20260201ABCDEF001").strip()
     if st.button("🔍 Check Status"):
         if ref_input:
             try:
-                df = pd.DataFrame(get_sheet("grievance").get_all_records())
+                # UPDATED TO UPPERCASE SHEET NAME
+                df = pd.DataFrame(get_sheet("GRIEVANCE").get_all_records())
                 match = df[df['REFERENCE_NO'].astype(str) == ref_input]
                 if not match.empty:
                     res = match.iloc[0]
-                    st.markdown("---")
-                    st.success(f"Record Found: {res['EMP_NAME']}")
-                    st.info(f"**Status:** {res['STATUS']}")
-                    st.warning(f"**Remark:** {res['OFFICER_REMARK']}")
+                    st.markdown(f"### Status: {res['STATUS']}")
+                    st.info(f"**Remarks:** {res['OFFICER_REMARK']}")
                 else: st.error("No record found.")
             except Exception as e: st.error(f"Error: {e}")
     if st.button("⬅️ Back to Home"): go_to('landing')
