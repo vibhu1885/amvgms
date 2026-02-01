@@ -69,8 +69,8 @@ st.markdown(f"""
     [data-testid="stImage"] img {{ margin: 0 auto; }}
 
     /* 3. HEADINGS */
-    .hindi-heading {{ text-align: center; color: white; font-weight: 900; font-size: 18px; width: 100%; }}
-    .english-heading {{ text-align: center; color: orange; font-weight: bold; font-size: 18px; margin-bottom: 30px; width: 100%; }}
+    .hindi-heading {{ text-align: center; color: white; font-weight: 900; font-size: 28px; width: 100%; }}
+    .english-heading {{ text-align: center; color: orange; font-weight: bold; font-size: 26px; margin-bottom: 30px; width: 100%; }}
     .welcome-msg {{ text-align: center; color: #fca311; font-weight: 900; font-size: 24px; margin-bottom: 25px; width: 100%; }}
 
     /* 4. INPUTS */
