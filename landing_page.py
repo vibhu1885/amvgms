@@ -173,7 +173,7 @@ def generate_ref_no(hrms_id, df_grievance):
 # --- PAGE 1: LANDING ---
 if st.session_state.page == 'landing':
     if os.path.exists(LOGO_PATH): st.image(LOGO_PATH, width=LOGO_WIDTH)
-    st.markdown('<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ/n</div>', unsafe_allow_html=True)
     st.markdown('<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
     
     if st.button("📝 नया Grievance दर्ज करें"): go_to('new_form')
