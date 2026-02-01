@@ -2,12 +2,13 @@ import streamlit as st
 import os
 import pandas as pd
 import time
+import pytz  # Added for Timezone handling
 from datetime import datetime
 from google.oauth2.service_account import Credentials
 import gspread
 
 # ==========================================
-# 0. SETUP
+# 0. SETUP & TIMEZONE
 # ==========================================
 LOGO_PATH = "assets/office_logo.png"
 LOGO_WIDTH = 130
@@ -19,6 +20,17 @@ if 'hrms_verified' not in st.session_state: st.session_state.hrms_verified = Fal
 if 'super_verified' not in st.session_state: st.session_state.super_verified = False
 if 'active_super' not in st.session_state: st.session_state.active_super = {}
 if 'admin_filter' not in st.session_state: st.session_state.admin_filter = 'ALL'
+
+# --- TIMEZONE HELPER ---
+def get_ist_time():
+    """Returns current time in Indian Standard Time."""
+    IST = pytz.timezone('Asia/Kolkata')
+    return datetime.now(IST).strftime("%d-%m-%Y %H:%M")
+
+def get_ist_date_str():
+    """Returns YYYYMMDD in IST for Ref No generation."""
+    IST = pytz.timezone('Asia/Kolkata')
+    return datetime.now(IST).strftime("%Y%m%d")
 
 # DATABASE CONNECT
 def get_sheet(sheet_name):
@@ -74,18 +86,13 @@ st.markdown(f"""
         border-radius: 20px !important;
         width: 300px !important; 
         height: 70px !important;
-        
-        /* Font Styling */
         font-weight: 900 !important;
-        font-size: 20px !important; /* Increased Size */
+        font-size: 20px !important;
         letter-spacing: 0.5px !important;
-        
         margin: 10px auto !important; 
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        
-        /* Shadows & Transition */
         box-shadow: 0 5px 15px rgba(0,0,0,0.3) !important;
         transition: all 0.3s ease-in-out !important;
     }}
@@ -95,10 +102,8 @@ st.markdown(f"""
         color: #fff !important;
         border-color: #a7c957 !important;
         transform: translateY(-4px) scale(1.02) !important;
-        box-shadow: 0 10px 20px rgba(167, 201, 87, 0.4) !important;
     }}
     
-    /* Internal Text Fix */
     div.stButton > button p {{ 
         font-weight: 900 !important; 
         font-size: 20px !important;
@@ -129,7 +134,8 @@ def go_to(page):
     st.rerun()
 
 def generate_ref_no(hrms_id, df_grievance):
-    date_str = datetime.now().strftime("%Y%m%d")
+    # USE IST DATE FOR REF NO
+    date_str = get_ist_date_str()
     count = 1
     if not df_grievance.empty and 'HRMS_ID' in df_grievance.columns:
         count = len(df_grievance[df_grievance['HRMS_ID'] == hrms_id]) + 1
@@ -191,7 +197,11 @@ elif st.session_state.page == 'new_form':
                     ws = get_sheet("GRIEVANCE")
                     df_g = pd.DataFrame(ws.get_all_records())
                     ref_no = generate_ref_no(st.session_state.active_hrms, df_g)
-                    new_row = [ref_no, datetime.now().strftime("%d-%m-%Y %H:%M"), st.session_state.active_hrms, st.session_state.found_emp_name, 
+                    
+                    # USE IST TIME FOR REGISTRATION
+                    now_ist = get_ist_time()
+                    
+                    new_row = [ref_no, now_ist, st.session_state.active_hrms, st.session_state.found_emp_name, 
                                emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "NEW", "N/A", "N/A"]
                     ws.append_row(new_row)
                     st.success(f"✅ Registered! Ref No: {ref_no}")
@@ -345,25 +355,25 @@ elif st.session_state.page == 'admin_dashboard':
                 st.markdown(f"<span class='detail-label'>Description:</span>", unsafe_allow_html=True)
                 st.info(f"{row['GRIEVANCE_TEXT']}")
 
-                # ACTION LOGIC
+                # ACTION / DISPLAY LOGIC
                 if row['STATUS'] == "NEW":
                     act_col, _ = st.columns([4, 4])
                     sel = act_col.selectbox("Assign To:", officers, key=f"adm_{i}")
                     if sel != "Select Officer":
-                        now = datetime.now().strftime("%d-%m-%Y %H:%M")
+                        # USE IST TIME FOR ASSIGNMENT
+                        now_ist = get_ist_time()
                         try:
-                            # 1. Update Sheet: Col 12 = Name Only, Col 13 = Time
+                            # 1. Update Sheet
                             cell = ws_g.find(str(row['REFERENCE_NO']))
                             ws_g.update_cell(cell.row, 11, "UNDER PROCESS")
-                            ws_g.update_cell(cell.row, 12, sel) # Just the name
-                            ws_g.update_cell(cell.row, 13, now) # Just the date
+                            ws_g.update_cell(cell.row, 12, sel) # Name
+                            ws_g.update_cell(cell.row, 13, now_ist) # Time
                             st.success("Assigned!")
                             time.sleep(0.5)
                             st.rerun()
                         except: st.error("Update Failed")
                 else:
-                    # CLEAN DISPLAY
-                    # Check if ASSIGN_DATE exists (Col 13), otherwise fallback to OFFICER_REMARK
+                    # CHECK FOR ASSIGN_DATE, fallback to OFFICER_REMARK if legacy data
                     assign_date = row.get('ASSIGN_DATE', row.get('OFFICER_REMARK', 'N/A'))
                     
                     st.markdown(f"""
