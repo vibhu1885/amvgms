@@ -145,7 +145,7 @@ if st.session_state.page == 'landing':
         st.image(LOGO_PATH, width=LOGO_WIDTH)
     
     # Headings
-    st.markdown(f'<div class="hindi-heading">सवारी डिब्बा कारखाना,<br>आलमबाग, लखनऊ.</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ.</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
     
     # Buttons - Now strictly aligned to the center axis of the headers
