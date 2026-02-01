@@ -13,7 +13,9 @@ APP_BG_COLOR = "#121212"
 HEADING_COLOR = "#FFFFFF" 
 LABEL_COLOR = "#FFFFFF"   
 
-# 3. Button Master Controls
+# 3. Button Master Controls (SIZE & LOOK)
+BTN_HEIGHT = "70px"        # <--- Control button height here
+BTN_WIDTH = "100%"         # <--- Control button width relative to 480px
 BTN_BG_COLOR = "#2D2D2D"
 BTN_TEXT_COLOR = "#FFFFFF"
 BTN_BORDER_COLOR = "#4F8BF9"
@@ -45,12 +47,12 @@ custom_css = f"""
         background-color: {APP_BG_COLOR};
     }}
 
-    /* 2. Main Container: Fixed at 480px for mobile-view consistency */
+    /* 2. Main Container */
     .block-container {{
         max-width: 480px !important;
         padding-top: 2rem !important;
-        padding-left: 10px !important; /* Tiny gutter so they don't hit the screen edge */
-        padding-right: 10px !important;
+        padding-left: 15px !important;
+        padding-right: 15px !important;
         margin: 0 auto !important;
         display: flex !important;
         flex-direction: column !important;
@@ -58,7 +60,7 @@ custom_css = f"""
         justify-content: flex-start !important; 
     }}
 
-    /* 3. Center every vertical block */
+    /* 3. Center blocks */
     [data-testid="stVerticalBlock"] {{
         width: 100% !important;
         display: flex !important;
@@ -74,7 +76,7 @@ custom_css = f"""
         margin-bottom: 6px !important;
     }}
 
-    /* 5. FULL WIDTH BUTTON STYLING */
+    /* 5. UNIFORM BUTTON STYLING */
     .stButton {{
         width: 100% !important;
         display: flex !important;
@@ -87,11 +89,14 @@ custom_css = f"""
         border: {BTN_BORDER_WIDTH} solid {BTN_BORDER_COLOR} !important;
         border-radius: {BTN_ROUNDNESS} !important;
         
-        /* THE KEY CHANGE: MAX WIDTH */
-        width: 100% !important; 
-        max-width: 100% !important;
+        /* Fixed Size Controls */
+        width: {BTN_WIDTH} !important; 
+        height: {BTN_HEIGHT} !important;
         
-        padding: 18px 10px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        
         font-size: {BTN_TEXT_SIZE} !important;
         font-weight: {BTN_FONT_WEIGHT} !important;
         margin: 10px 0px !important;
@@ -126,7 +131,7 @@ custom_css = f"""
         margin-bottom: 20px;
     }}
 
-    /* 7. Input Field Centering - also made wider */
+    /* 7. Input Field Styling */
     [data-testid="stTextInput"], [data-testid="stTextArea"] {{
         width: 100% !important;
     }}
@@ -154,6 +159,7 @@ if st.session_state.page == 'landing':
     st.markdown(f'<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
     
+    # All buttons will now be exactly the same height (e.g., 70px)
     if st.button("📝 नया Grievance दर्ज करें"):
         go_to('new_form')
 
@@ -176,7 +182,8 @@ elif st.session_state.page == 'status_check':
         go_to('landing')
 
 elif st.session_state.page == 'login':
-    st.markdown('<div class="hindi-heading">Admin</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hindi-heading">Admin Login</div>', unsafe_allow_html=True)
+    st.text_input("UserID")
     st.text_input("Password", type="password")
     if st.button("⬅️ Back to Home"):
         go_to('landing')
