@@ -125,7 +125,7 @@ st.markdown(f"""
         color: #131419;
         font-family: sans-serif;
     }}
-    .g-ref {{ font-size: 22px; font-weight: 900; color: #000; margin-bottom: 10px; border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 8px; }}
+    .g-ref {{ font-size: 16px; font-weight: 900; color: #000; margin-bottom: 10px; border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 8px; }}
     .g-label {{ font-size: 13px; font-weight: bold; color: #444; text-transform: uppercase; margin-top: 12px; letter-spacing: 0.5px; }}
     .g-value {{ font-size: 16px; color: #000; font-weight: 600; line-height: 1.4; }}
     
