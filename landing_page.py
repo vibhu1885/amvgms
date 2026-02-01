@@ -79,13 +79,13 @@ st.markdown(f"""
     }}
     .stTextInput, .stSelectbox, .stTextArea {{ width: 100% !important; }}
 
-    /* 5. BUTTONS (300px Fixed) */
+    /* 5. BUTTONS (480px Fixed) */
     div.stButton > button {{
         background-color: #faf9f9 !important;
         color: #131419 !important;
         border: 4px solid #fca311 !important;
         border-radius: 20px !important;
-        width: 300px !important; 
+        width: 480px !important; 
         height: 70px !important;
         font-weight: 900 !important;
         font-size: 20px !important;
@@ -98,7 +98,7 @@ st.markdown(f"""
         background-color: #a7c957 !important;
         color: #fff !important;
         border-color: #a7c957 !important;
-        transform: translateY(-4px) scale(1.02) !important;
+        transform: translateY(-4px) scale(1.04) !important;
     }}
     div.stButton > button p {{ 
         font-weight: 900 !important; 
