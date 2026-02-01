@@ -6,17 +6,27 @@ from google.oauth2.service_account import Credentials
 import gspread
 
 # ==========================================
-# 0. GOOGLE SHEETS CONNECTION SETUP
+# 0. SECURE GOOGLE SHEETS CONNECTION
 # ==========================================
 def get_sheet(sheet_name):
+    # This scope allows both reading and writing
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    # Pulling credentials directly from Streamlit Secrets
+    
+    # Check if secrets exist
+    if "gcp_service_account" not in st.secrets:
+        st.error("❌ Secrets not found! Please check .streamlit/secrets.toml")
+        st.stop()
+        
     creds_info = st.secrets["gcp_service_account"]
     creds = Credentials.from_service_account_info(creds_info, scopes=scope)
     client = gspread.authorize(creds)
-    # Open the workbook and specific sheet
-    sheet = client.open("Grievance_DB").worksheet(sheet_name)
-    return sheet
+    
+    # Open the Master Workbook
+    try:
+        return client.open("Grievance_DB").worksheet(sheet_name)
+    except Exception as e:
+        st.error(f"❌ Could not find sheet '{sheet_name}': {e}")
+        st.stop()
 
 # ==========================================
 # CENTRAL CONTROL PANEL (STYLING)
@@ -48,28 +58,13 @@ custom_css = f"""
 <style>
     header, footer, [data-testid="stHeader"] {{ visibility: hidden; height: 0; }}
     .stApp {{ background-color: {APP_BG_COLOR}; }}
-
     .block-container {{
         max-width: 480px !important;
         padding-top: 2rem !important;
         margin: 0 auto !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important; 
-        justify-content: flex-start !important;
     }}
-
-    [data-testid="stVerticalBlock"] {{
-        width: 100% !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-    }}
-
-    [data-testid="stImage"] {{ display: flex !important; justify-content: center !important; width: 100% !important; margin-bottom: 6px !important; }}
-
-    .stButton {{ width: 100% !important; display: flex !important; justify-content: center !important; }}
-
+    [data-testid="stVerticalBlock"] {{ width: 100% !important; align-items: center !important; }}
+    [data-testid="stImage"] {{ display: flex !important; justify-content: center !important; }}
     div.stButton > button {{
         background-color: {BTN_BG_COLOR} !important;
         color: {BTN_TEXT_COLOR} !important;
@@ -77,34 +72,15 @@ custom_css = f"""
         border-radius: {BTN_ROUNDNESS} !important;
         width: {BTN_WIDTH} !important; 
         height: {BTN_HEIGHT} !important;
-        display: flex !important; align-items: center !important; justify-content: center !important;
-        margin: 10px 0px !important;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    }}
-
-    div.stButton > button p {{
         font-size: {BTN_TEXT_SIZE} !important;
         font-weight: {BTN_FONT_WEIGHT} !important;
-        color: {BTN_TEXT_COLOR} !important;
+        margin: 10px 0px !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }}
-
-    div.stButton > button:hover {{ background-color: {BTN_HOVER_COLOR} !important; transform: translateY(-2px); }}
-
-    .hindi-heading, .english-heading, p, label, .stMarkdown {{
-        text-align: center !important;
-        width: 100% !important;
-        color: {LABEL_COLOR} !important;
-    }}
-
-    .hindi-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: 900; margin-top: 0px; }}
-    .english-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: bold; margin-bottom: 20px; }}
-
-    [data-testid="stTextInput"], [data-testid="stTextArea"], [data-testid="stSelectbox"] {{
-        width: 100% !important;
-    }}
-    
-    .err-text {{ color: #e63946; font-size: 14px; text-align: center; font-weight: bold; margin-bottom: 10px; }}
+    div.stButton > button p {{ font-size: {BTN_TEXT_SIZE} !important; font-weight: {BTN_FONT_WEIGHT} !important; }}
+    .hindi-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: 900; text-align: center; }}
+    .english-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: bold; margin-bottom: 20px; text-align: center; }}
+    label {{ color: {LABEL_COLOR} !important; font-weight: bold; }}
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -144,6 +120,7 @@ elif st.session_state.page == 'new_form':
         if st.button("Verify ID / सत्यापित करें"):
             if len(hrms_id) == 6 and hrms_id.isalpha():
                 try:
+                    # FETCHING MAPPING
                     mapping_ws = get_sheet("EMPLOYEE_MAPPING")
                     df = pd.DataFrame(mapping_ws.get_all_records())
                     match = df[df['HRMS_ID'] == hrms_id]
@@ -156,15 +133,16 @@ elif st.session_state.page == 'new_form':
                     else:
                         st.error("❌ HRMS ID not found in mapping sheet.")
                 except Exception as e:
-                    st.error(f"Error connecting to Sheets: {e}")
+                    st.error(f"Connection Error: {e}")
             else:
                 st.error("⚠️ Invalid Format! Use 6 CAPITAL alphabets.")
     
     else:
-        # FORM SECTION - Appears after verification
+        # VERIFIED FORM SECTION
         st.success(f"✅ Employee Found: {st.session_state.found_emp_name}")
         
         try:
+            # PULL DROPDOWNS
             dd_ws = get_sheet("DROPDOWN_MAPPINGS")
             dd_df = pd.DataFrame(dd_ws.get_all_records())
             designations = ["Select"] + dd_df['DESIGNATION'].dropna().unique().tolist()
@@ -184,7 +162,7 @@ elif st.session_state.page == 'new_form':
         if st.button("✅ Submit Grievance"):
             form_data = [emp_no, emp_desig, emp_trade, emp_sec, g_type, g_text]
             if any(x in [None, "", "Select"] for x in form_data):
-                st.markdown('<p class="err-text">⚠️ All fields marked with * are mandatory!</p>', unsafe_allow_html=True)
+                st.error("⚠️ All fields marked with * are mandatory!")
             else:
                 now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
                 ref_no = "REF" + datetime.now().strftime("%y%m%d%H%M%S")
