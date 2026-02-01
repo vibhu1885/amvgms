@@ -79,13 +79,13 @@ st.markdown(f"""
     }}
     .stTextInput, .stSelectbox, .stTextArea {{ width: 100% !important; }}
 
-    /* 5. BUTTONS (360px Fixed) */
+    /* 5. BUTTONS (350px Fixed) */
     div.stButton > button {{
         background-color: #faf9f9 !important;
         color: #131419 !important;
         border: 4px solid #fca311 !important;
         border-radius: 20px !important;
-        width: 360px !important; 
+        width: 350px !important; 
         height: 70px !important;
         font-weight: 900 !important;
         font-size: 20px !important;
