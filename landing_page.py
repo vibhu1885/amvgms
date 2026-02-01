@@ -192,4 +192,55 @@ elif st.session_state.page == 'login':
     if not st.session_state.super_verified:
         if st.button("👤 Find User"):
             try:
-                df_off = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all
+                df_off = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
+                match = df_off[df_off['HRMS_ID'] == s_hrms]
+                if not match.empty:
+                    st.session_state.active_super = match.iloc[0].to_dict()
+                    st.session_state.super_verified = True
+                    st.rerun()
+                else: st.error("❌ HRMS ID not found.")
+            except Exception as e: st.error(f"Error: {e}")
+    else:
+        st.success(f"✅ {st.session_state.active_super['NAME']} ({st.session_state.active_super['RANK']})")
+        key = st.text_input("Enter Login Key", type="password")
+        if st.button("🔓 Login"):
+            if str(key) == str(st.session_state.active_super['LOGIN_KEY']):
+                role = st.session_state.active_super['ROLE'].upper()
+                if role == "ADMIN": go_to('admin_dashboard')
+                elif role == "OFFICER": go_to('officer_dashboard')
+                elif role == "BOTH": go_to('role_selection')
+                st.rerun()
+            else: st.error("❌ Invalid Key.")
+    if st.button("🏠 Back to Home"):
+        st.session_state.super_verified = False
+        go_to('landing')
+
+# --- ADMIN DASHBOARD (FULL INTEGRATED) ---
+elif st.session_state.page == 'admin_dashboard':
+    st.markdown('<div class="hindi-heading" style="font-size:35px;">Admin Dashboard</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="text-align:center; color:#fca311; font-weight:bold;">Welcome: {st.session_state.active_super.get("NAME")}</div>', unsafe_allow_html=True)
+    ws_g = get_sheet("GRIEVANCE")
+    df = pd.DataFrame(ws_g.get_all_records())
+    st.markdown(f'<div class="card-box"><div class="card" style="background:white;">Total: {len(df)}</div><div class="card" style="background:#3498db;">NEW: {len(df[df["STATUS"]=="NEW"])}</div><div class="card" style="background:#f1c40f;">PROCESS: {len(df[df["STATUS"]=="UNDER PROCESS"])}</div><div class="card" style="background:#2ecc71;">RESOLVED: {len(df[df["STATUS"]=="RESOLVED"])}</div></div>', unsafe_allow_html=True)
+    
+    # Simple table view and assignment logic
+    off_df = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
+    officers = ["Select Officer"] + [f"{r['NAME']} ({r['RANK']})" for _, r in off_df[off_df['ROLE'].isin(['OFFICER', 'BOTH'])].iterrows()]
+    
+    for i, row in df.iterrows():
+        st.markdown("---")
+        c1, c2, c3 = st.columns([2, 5, 3])
+        with c1: st.write(f"**Ref:** {row['REFERENCE_NO']}\n**Status:** {row['STATUS']}")
+        with c2: st.write(f"**{row['EMP_NAME']}**\n{row['GRIEVANCE_TEXT']}")
+        with c3:
+            if row['STATUS'] == "NEW":
+                sel = st.selectbox("Assign", officers, key=f"adm_{i}")
+                if sel != "Select Officer":
+                    ws_g.update_cell(i+2, 11, "UNDER PROCESS")
+                    ws_g.update_cell(i+2, 12, f"Marked to: {sel} at {datetime.now().strftime('%d-%m-%Y %H:%M')}")
+                    st.rerun()
+            else: st.info(row['MARKED_OFFICER'])
+
+    if st.button("🚪 Logout"):
+        st.session_state.super_verified = False
+        go_to('landing')
