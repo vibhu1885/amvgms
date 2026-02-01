@@ -6,7 +6,7 @@ from google.oauth2.service_account import Credentials
 import gspread
 
 # ==========================================
-# 0. DATABASE SETUP
+# 0. SETUP & CONSTANTS
 # ==========================================
 LOGO_PATH = "assets/office_logo.png"
 LOGO_WIDTH = 130
@@ -17,6 +17,9 @@ if 'page' not in st.session_state: st.session_state.page = 'landing'
 if 'hrms_verified' not in st.session_state: st.session_state.hrms_verified = False
 if 'super_verified' not in st.session_state: st.session_state.super_verified = False
 if 'active_super' not in st.session_state: st.session_state.active_super = {}
+
+# Configure Page - Default to Centered
+st.set_page_config(page_title="GMS Alambagh", layout="centered")
 
 def get_sheet(sheet_name):
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -29,81 +32,79 @@ def get_sheet(sheet_name):
     return client.open("Grievance_DB").worksheet(sheet_name)
 
 # ==========================================
-# 1. THE "IRON-CLAD" STYLING ENGINE
+# 1. THE "PHYSICAL LOCK" CSS
 # ==========================================
-st.set_page_config(page_title="GMS Alambagh", layout="centered")
+# Dynamic container width: 1200px for Admin, 500px for everything else
+container_width = "1200px" if st.session_state.page == 'admin_dashboard' else "500px"
 
-def inject_custom_css():
-    # Dynamic Width: Wide for Admin, Narrow for everything else
-    container_width = "1100px" if st.session_state.page == 'admin_dashboard' else "480px"
+st.markdown(f"""
+<style>
+    header, footer, [data-testid="stHeader"] {{ visibility: hidden; height: 0; }}
+    .stApp {{ background-color: {APP_BG_COLOR}; }}
     
-    st.markdown(f"""
-    <style>
-        header, footer, [data-testid="stHeader"] {{ visibility: hidden; height: 0; }}
-        .stApp {{ background-color: {APP_BG_COLOR}; }}
-        
-        /* 1. Container Width Controller */
-        .block-container {{
-            max-width: {container_width} !important;
-            padding-top: 2rem !important;
-            margin: auto !important;
-        }}
+    /* 1. Force the Main Container Width */
+    .block-container {{
+        max-width: {container_width} !important;
+        padding-top: 2rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        margin: auto !important;
+    }}
 
-        /* 2. LOGO CENTERING */
-        [data-testid="stImage"] {{
-            display: flex !important;
-            justify-content: center !important;
-            width: 100% !important;
-            margin-bottom: 10px;
-        }}
-        [data-testid="stImage"] img {{ margin: 0 auto !important; }}
+    /* 2. Logo Alignment Wrapper */
+    [data-testid="stImage"] {{
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        margin-bottom: 15px;
+    }}
+    [data-testid="stImage"] img {{
+        margin: 0 auto !important; 
+    }}
 
-        /* 3. BUTTON STYLING & CENTERING (FIXED SIZE 300px) */
-        .stButton {{
-            display: flex !important;
-            justify-content: center !important;
-            width: 100% !important;
-        }}
-        
-        div.stButton > button {{
-            background-color: #faf9f9 !important;
-            color: #131419 !important;
-            border: 4px solid #fca311 !important;
-            border-radius: 22px !important;
-            width: 300px !important; /* FIXED WIDTH - WON'T SHRINK */
-            height: 70px !important;
-            font-weight: 900 !important;
-            font-size: 17px !important;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.6);
-            margin: 10px auto !important; /* PHYSICAL CENTER LOCK */
-            display: block !important;
-            transition: all 0.3s ease;
-        }}
-        div.stButton > button:hover {{
-            background-color: #a7c957 !important;
-            transform: translateY(-3px);
-        }}
-        div.stButton > button p {{ font-weight: 900 !important; }}
+    /* 3. Button Styling & Centering */
+    div.stButton > button {{
+        background-color: #faf9f9 !important;
+        color: #131419 !important;
+        border: 4px solid #fca311 !important;
+        border-radius: 22px !important;
+        width: 100% !important; /* Fills the python column exactly */
+        height: 70px !important;
+        font-weight: 900 !important;
+        font-size: 17px !important;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+        transition: all 0.3s ease;
+        margin: 5px auto !important;
+        display: block !important;
+    }}
+    div.stButton > button:hover {{
+        background-color: #a7c957 !important;
+        transform: translateY(-3px);
+    }}
+    div.stButton > button p {{ font-weight: 900 !important; margin: 0 !important; }}
 
-        /* 4. TEXT ALIGNMENT */
-        .hindi-heading {{ text-align: center; color: white; font-weight: 900; font-size: 22px; }}
-        .english-heading {{ text-align: center; color: white; font-weight: bold; font-size: 18px; margin-bottom: 25px; }}
-        
-        /* Form Labels - Strict Left Align */
-        label {{ color: white !important; font-weight: bold !important; text-align: left !important; display: block !important; width: 100%; }}
-        .stTextInput, .stSelectbox, .stTextArea {{ text-align: left !important; }}
-        
-        /* Admin Cards */
-        .card-box {{ display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; width: 100%; }}
-        .card {{ padding: 15px; border-radius: 12px; text-align: center; font-weight: 900; color: #131419; min-width: 150px; flex: 1; }}
+    /* 4. Text & Label Alignment */
+    .hindi-heading {{ text-align: center; color: white; font-weight: 900; font-size: 22px; line-height: 1.4; }}
+    .english-heading {{ text-align: center; color: white; font-weight: bold; font-size: 18px; margin-bottom: 25px; }}
+    
+    /* Strict Left Align for Form Labels */
+    label {{ 
+        text-align: left !important; 
+        color: white !important; 
+        font-weight: bold !important; 
+        display: block !important; 
+        width: 100%; 
+    }}
+    .stTextInput input, .stTextArea textarea, .stSelectbox {{ color: #131419; }}
 
-    </style>
-    """, unsafe_allow_html=True)
-
-inject_custom_css()
+    /* Admin Cards */
+    .card-box {{ display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }}
+    .card {{ padding: 15px; border-radius: 12px; text-align: center; font-weight: 900; color: #131419; min-width: 140px; flex: 1; }}
+</style>
+""", unsafe_allow_html=True)
 
 # ==========================================
-# 2. NAVIGATION HELPER
+# 2. NAVIGATION & HELPER FUNCTIONS
 # ==========================================
 def go_to(page):
     st.session_state.page = page
@@ -117,18 +118,25 @@ def generate_ref_no(hrms_id, df_grievance):
     return f"{date_str}{hrms_id}{str(count).zfill(3)}"
 
 # ==========================================
-# 3. PAGES
+# 3. PAGE LOGIC (WITH PHYSICAL COLUMN LOCKS)
 # ==========================================
 
 # --- LANDING PAGE ---
 if st.session_state.page == 'landing':
-    if os.path.exists(LOGO_PATH): st.image(LOGO_PATH, width=LOGO_WIDTH)
+    # LOGO: Nested columns to force center
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c2:
+        if os.path.exists(LOGO_PATH): st.image(LOGO_PATH, width=LOGO_WIDTH)
+    
     st.markdown('<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
     st.markdown('<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
     
-    if st.button("📝 नया Grievance दर्ज करें"): go_to('new_form')
-    if st.button("🔍 ग्रीवांस की वर्तमान स्थिति जानें"): go_to('status_check')
-    if st.button("🔐 Officer/ Admin Login"): go_to('login')
+    # BUTTONS: Locked inside a middle column (0.6 ratio)
+    b1, b2, b3 = st.columns([1, 4, 1])
+    with b2:
+        if st.button("📝 नया Grievance दर्ज करें"): go_to('new_form')
+        if st.button("🔍 ग्रीवांस की वर्तमान स्थिति जानें"): go_to('status_check')
+        if st.button("🔐 Officer/ Admin Login"): go_to('login')
 
 # --- REGISTRATION PAGE ---
 elif st.session_state.page == 'new_form':
@@ -136,20 +144,24 @@ elif st.session_state.page == 'new_form':
     
     if not st.session_state.hrms_verified:
         hrms_in = st.text_input("Enter HRMS ID*", max_chars=6).upper().strip()
-        if st.button("🔎 Verify ID"):
-            try:
-                df = pd.DataFrame(get_sheet("EMPLOYEE_MAPPING").get_all_records())
-                match = df[df['HRMS_ID'] == hrms_in]
-                if not match.empty:
-                    st.session_state.found_emp_name = match.iloc[0]['EMPLOYEE_NAME']
-                    st.session_state.hrms_verified = True
-                    st.session_state.active_hrms = hrms_in
-                    st.rerun()
-                else: st.error("❌ HRMS ID not found.")
-            except Exception as e: st.error(f"Error: {e}")
+        
+        # Center the Verify Button
+        b1, b2, b3 = st.columns([1, 2, 1])
+        with b2:
+            if st.button("🔎 Verify ID"):
+                try:
+                    df = pd.DataFrame(get_sheet("EMPLOYEE_MAPPING").get_all_records())
+                    match = df[df['HRMS_ID'] == hrms_in]
+                    if not match.empty:
+                        st.session_state.found_emp_name = match.iloc[0]['EMPLOYEE_NAME']
+                        st.session_state.hrms_verified = True
+                        st.session_state.active_hrms = hrms_in
+                        st.rerun()
+                    else: st.error("❌ HRMS ID not found.")
+                except Exception as e: st.error(f"Error: {e}")
     else:
         st.success(f"✅ Employee: {st.session_state.found_emp_name}")
-        # --- DROPDOWNS ---
+        
         try:
             dd_df = pd.DataFrame(get_sheet("DROPDOWN_MAPPINGS").get_all_records())
             designations = ["Select"] + [x for x in dd_df['DESIGNATION_LIST'].dropna().unique().tolist() if x]
@@ -164,42 +176,50 @@ elif st.session_state.page == 'new_form':
         g_type = st.selectbox("Grievance Type*", g_types)
         g_text = st.text_area("Complaint Details*", max_chars=1000)
 
-        if st.button("📤 Grievance जमा करें"):
-            if not any(x in [None, "", "Select"] for x in [emp_no, emp_desig, emp_trade, emp_sec, g_type, g_text]):
-                try:
-                    ws = get_sheet("GRIEVANCE")
-                    df_g = pd.DataFrame(ws.get_all_records())
-                    ref_no = generate_ref_no(st.session_state.active_hrms, df_g)
-                    new_row = [ref_no, datetime.now().strftime("%d-%m-%Y %H:%M"), st.session_state.active_hrms, st.session_state.found_emp_name, 
-                               emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "NEW", "N/A", "N/A"]
-                    ws.append_row(new_row)
-                    st.success(f"✅ Registered! Ref No: {ref_no}")
-                    st.balloons()
-                    st.session_state.hrms_verified = False
-                except Exception as e: st.error(f"Error: {e}")
-            else: st.error("⚠️ All fields are required.")
+        # Center Submit Button
+        b1, b2, b3 = st.columns([0.5, 2, 0.5])
+        with b2:
+            if st.button("📤 Grievance जमा करें"):
+                if not any(x in [None, "", "Select"] for x in [emp_no, emp_desig, emp_trade, emp_sec, g_type, g_text]):
+                    try:
+                        ws = get_sheet("GRIEVANCE")
+                        df_g = pd.DataFrame(ws.get_all_records())
+                        ref_no = generate_ref_no(st.session_state.active_hrms, df_g)
+                        new_row = [ref_no, datetime.now().strftime("%d-%m-%Y %H:%M"), st.session_state.active_hrms, st.session_state.found_emp_name, 
+                                   emp_no, emp_sec, emp_desig, emp_trade, g_type, g_text, "NEW", "N/A", "N/A"]
+                        ws.append_row(new_row)
+                        st.success(f"✅ Registered! Ref No: {ref_no}")
+                        st.balloons()
+                        st.session_state.hrms_verified = False
+                    except Exception as e: st.error(f"Error: {e}")
+                else: st.error("⚠️ All fields are required.")
 
-    if st.button("🏠 Back to Home"):
-        st.session_state.hrms_verified = False
-        go_to('landing')
+    # Center Back Button
+    b1, b2, b3 = st.columns([1, 2, 1])
+    with b2:
+        if st.button("🏠 Back to Home"):
+            st.session_state.hrms_verified = False
+            go_to('landing')
 
 # --- STATUS CHECK ---
 elif st.session_state.page == 'status_check':
     st.markdown('<div class="hindi-heading">Grievance Status</div>', unsafe_allow_html=True)
     ref_in = st.text_input("Enter Reference Number*").strip()
     
-    if st.button("🔍 Check Status"):
-        try:
-            df = pd.DataFrame(get_sheet("GRIEVANCE").get_all_records())
-            match = df[df['REFERENCE_NO'].astype(str) == ref_in]
-            if not match.empty:
-                res = match.iloc[0]
-                st.info(f"**Status:** {res['STATUS']}")
-                st.write(f"**Remark:** {res['OFFICER_REMARK']}")
-            else: st.error("❌ Not Found")
-        except: st.error("Error fetching data.")
-        
-    if st.button("🏠 Back to Home"): go_to('landing')
+    b1, b2, b3 = st.columns([1, 2, 1])
+    with b2:
+        if st.button("🔍 Check Status"):
+            try:
+                df = pd.DataFrame(get_sheet("GRIEVANCE").get_all_records())
+                match = df[df['REFERENCE_NO'].astype(str) == ref_in]
+                if not match.empty:
+                    res = match.iloc[0]
+                    st.info(f"**Status:** {res['STATUS']}")
+                    st.write(f"**Remark:** {res['OFFICER_REMARK']}")
+                else: st.error("❌ Not Found")
+            except: st.error("Error fetching data.")
+            
+        if st.button("🏠 Back to Home"): go_to('landing')
 
 # --- LOGIN PAGE ---
 elif st.session_state.page == 'login':
@@ -208,31 +228,35 @@ elif st.session_state.page == 'login':
     locked = st.session_state.super_verified
     s_hrms = st.text_input("Enter HRMS ID", value=st.session_state.active_super.get('HRMS_ID', ""), disabled=locked).upper().strip()
     
-    if not st.session_state.super_verified:
-        if st.button("👤 Find User"):
-            try:
-                df = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
-                match = df[df['HRMS_ID'] == s_hrms]
-                if not match.empty:
-                    st.session_state.active_super = match.iloc[0].to_dict()
-                    st.session_state.super_verified = True
-                    st.rerun()
-                else: st.error("User not found.")
-            except: st.error("DB Error")
-    else:
-        st.success(f"✅ {st.session_state.active_super['NAME']}")
-        key = st.text_input("Password", type="password")
-        if st.button("🔓 Login"):
-            if str(key) == str(st.session_state.active_super['LOGIN_KEY']):
-                role = st.session_state.active_super['ROLE'].upper()
-                if role == "ADMIN": go_to('admin_dashboard')
-                elif role == "OFFICER": go_to('officer_dashboard')
-                elif role == "BOTH": go_to('role_selection')
-            else: st.error("Invalid Key")
+    b1, b2, b3 = st.columns([0.5, 2, 0.5])
+    with b2:
+        if not st.session_state.super_verified:
+            if st.button("👤 Find User"):
+                try:
+                    df = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
+                    match = df[df['HRMS_ID'] == s_hrms]
+                    if not match.empty:
+                        st.session_state.active_super = match.iloc[0].to_dict()
+                        st.session_state.super_verified = True
+                        st.rerun()
+                    else: st.error("User not found.")
+                except: st.error("DB Error")
+        else:
+            st.success(f"✅ {st.session_state.active_super['NAME']}")
+            key = st.text_input("Password", type="password")
+            if st.button("🔓 Login"):
+                if str(key) == str(st.session_state.active_super['LOGIN_KEY']):
+                    role = st.session_state.active_super['ROLE'].upper()
+                    if role == "ADMIN": go_to('admin_dashboard')
+                    elif role == "OFFICER": go_to('officer_dashboard')
+                    elif role == "BOTH": go_to('role_selection')
+                else: st.error("Invalid Key")
 
-    if st.button("🏠 Back to Home"):
-        st.session_state.super_verified = False
-        go_to('landing')
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c2:
+        if st.button("🏠 Back to Home"):
+            st.session_state.super_verified = False
+            go_to('landing')
 
 # --- ADMIN DASHBOARD ---
 elif st.session_state.page == 'admin_dashboard':
@@ -242,7 +266,7 @@ elif st.session_state.page == 'admin_dashboard':
     ws_g = get_sheet("GRIEVANCE")
     df = pd.DataFrame(ws_g.get_all_records())
 
-    # 1. OVERSIGHT CARDS
+    # 1. Master Oversight Cards
     st.markdown(f"""
     <div class="card-box">
         <div class="card" style="background:white;">TOTAL: {len(df)}</div>
@@ -252,13 +276,13 @@ elif st.session_state.page == 'admin_dashboard':
     </div>
     """, unsafe_allow_html=True)
 
-    # 2. FILTERS
+    # 2. Filters
     c1, c2, c3, c4 = st.columns([2, 2, 2, 2])
     with c1: f_hrms = st.text_input("Filter HRMS").upper()
     with c2: f_name = st.text_input("Filter Name")
     with c3: f_sec = st.text_input("Filter Section")
     with c4: 
-        st.write("") # Spacer
+        st.write("") 
         show_new = st.checkbox("Show 'NEW' Only")
 
     f_df = df.copy()
@@ -267,14 +291,13 @@ elif st.session_state.page == 'admin_dashboard':
     if f_sec: f_df = f_df[f_df['SECTION'].str.contains(f_sec, case=False, na=False)]
     if show_new: f_df = f_df[f_df['STATUS'] == 'NEW']
 
-    # 3. ACTION TABLE
+    # 3. Action Table
     off_df = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
     officers = ["Select Officer"] + [f"{r['NAME']} ({r['RANK']})" for _, r in off_df[off_df['ROLE'].isin(['OFFICER', 'BOTH'])].iterrows()]
 
     st.markdown("---")
     for i, row in f_df.iterrows():
-        # Action Row Layout
-        ac1, ac2, ac3 = st.columns([2, 4, 3])
+        ac1, ac2, ac3 = st.columns([1.5, 5, 2.5])
         
         with ac1:
             color = "#3498db" if row['STATUS'] == "NEW" else "#f1c40f" if row['STATUS'] == "UNDER PROCESS" else "#2ecc71"
@@ -287,17 +310,11 @@ elif st.session_state.page == 'admin_dashboard':
             
         with ac3:
             if row['STATUS'] == "NEW":
-                # Only show dropdown if new
                 sel = st.selectbox("Assign", officers, key=f"adm_{i}")
                 if sel != "Select Officer":
                     now = datetime.now().strftime("%d-%m-%Y %H:%M")
-                    # Finding the row index (assuming order is preserved or finding by Ref No)
-                    # For safety, finding cell by Ref No is best, but here we assume direct update
-                    # To be safe in production, use: cell = ws_g.find(str(row['REFERENCE_NO']))
-                    # Here we approximate for speed:
-                    # Note: Row index is i + 2 because of header + 0-index match
+                    # Finding correct cell to update using index mapping or search
                     try:
-                        # Find the actual row number in the sheet to update correct cell
                         cell = ws_g.find(str(row['REFERENCE_NO']))
                         ws_g.update_cell(cell.row, 11, "UNDER PROCESS")
                         ws_g.update_cell(cell.row, 12, f"Marked to: {sel} at {now}")
@@ -308,14 +325,18 @@ elif st.session_state.page == 'admin_dashboard':
                 st.info(f"📍 {row['MARKED_OFFICER']}")
         st.markdown("---")
 
-    if st.button("🚪 Logout"):
-        st.session_state.super_verified = False
-        go_to('landing')
+    b1, b2, b3 = st.columns([1, 2, 1])
+    with b2:
+        if st.button("🚪 Logout"):
+            st.session_state.super_verified = False
+            go_to('landing')
 
 elif st.session_state.page == 'role_selection':
     st.markdown('<div class="hindi-heading">Select Dashboard</div>', unsafe_allow_html=True)
-    if st.button("🛠️ Admin Dashboard"): go_to('admin_dashboard')
-    if st.button("📋 Officer Dashboard"): go_to('officer_dashboard')
+    b1, b2, b3 = st.columns([1, 4, 1])
+    with b2:
+        if st.button("🛠️ Admin Dashboard"): go_to('admin_dashboard')
+        if st.button("📋 Officer Dashboard"): go_to('officer_dashboard')
 
 elif st.session_state.page == 'officer_dashboard':
     st.markdown('<div class="hindi-heading">Officer Dashboard</div>', unsafe_allow_html=True)
