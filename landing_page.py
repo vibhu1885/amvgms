@@ -14,16 +14,18 @@ HEADING_COLOR = "#FFFFFF"
 LABEL_COLOR = "#FFFFFF"   
 
 # 3. Button Master Controls (SIZE & LOOK)
-BTN_HEIGHT = "70px"        # <--- Control button height here
-BTN_WIDTH = "300px"         # <--- Control button width relative to 480px
+BTN_HEIGHT = "70px"        
+BTN_WIDTH = "300px"         
 BTN_BG_COLOR = "#faf9f9"
 BTN_TEXT_COLOR = "#131419"
 BTN_BORDER_COLOR = "#fca311"
 BTN_BORDER_WIDTH = "2px"
 BTN_ROUNDNESS = "25px"
 BTN_HOVER_COLOR = "#a7c957"
-BTN_TEXT_SIZE = "32px"
-BTN_FONT_WEIGHT = "Extra-Bold"
+
+# --- FONT CONTROLS ---
+BTN_TEXT_SIZE = "20px"     # Increased default size
+BTN_FONT_WEIGHT = "900"    # Ultra bold
 
 # 4. Label & Text Controls
 LABEL_FONT_SIZE = "18px"
@@ -89,7 +91,6 @@ custom_css = f"""
         border: {BTN_BORDER_WIDTH} solid {BTN_BORDER_COLOR} !important;
         border-radius: {BTN_ROUNDNESS} !important;
         
-        /* Fixed Size Controls */
         width: {BTN_WIDTH} !important; 
         height: {BTN_HEIGHT} !important;
         
@@ -97,11 +98,16 @@ custom_css = f"""
         align-items: center !important;
         justify-content: center !important;
         
-        font-size: {BTN_TEXT_SIZE} !important;
-        font-weight: {BTN_FONT_WEIGHT} !important;
         margin: 10px 0px !important;
         transition: all 0.3s ease;
         box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }}
+
+    /* Target the text inside the button specifically for Font Control */
+    div.stButton > button p {{
+        font-size: {BTN_TEXT_SIZE} !important;
+        font-weight: {BTN_FONT_WEIGHT} !important;
+        color: {BTN_TEXT_COLOR} !important;
     }}
 
     div.stButton > button:hover {{
@@ -159,7 +165,6 @@ if st.session_state.page == 'landing':
     st.markdown(f'<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
     
-    # All buttons will now be exactly the same height (e.g., 70px)
     if st.button("📝 नया Grievance दर्ज करें"):
         go_to('new_form')
 
