@@ -41,7 +41,7 @@ BTN_FONT_WEIGHT = "900"
 st.set_page_config(page_title="GMS Alambagh", layout="centered")
 
 # ==========================================
-# STRICT ALIGNMENT ENGINE
+# STRICT ALIGNMENT ENGINE (STRICT CENTER LOGO/BTN, LEFT LABELS)
 # ==========================================
 custom_css = f"""
 <style>
@@ -54,20 +54,19 @@ custom_css = f"""
         margin: 0 auto !important;
     }}
 
-    /* FORCE IMAGE/LOGO CENTERING */
-    [data-testid="stImage"] {{
-        display: flex !important;
-        justify-content: center !important;
-        width: 100% !important;
+    /* STRICT LOGO CENTERING */
+    [data-testid="stImage"] {{ 
+        display: flex !important; 
+        justify-content: center !important; 
+        width: 100% !important; 
     }}
 
-    /* THE 'GOLDEN RULE' FOR BUTTON CENTERING */
-    .stButton {{
-        display: flex !important;
-        justify-content: center !important;
-        width: 100% !important;
+    /* STRICT BUTTON CENTERING + BOLDNESS + SHADOW */
+    .stButton {{ 
+        width: 100% !important; 
+        display: flex !important; 
+        justify-content: center !important; 
     }}
-
     div.stButton > button {{
         background-color: {BTN_BG_COLOR} !important;
         color: {BTN_TEXT_COLOR} !important;
@@ -75,27 +74,26 @@ custom_css = f"""
         border-radius: {BTN_ROUNDNESS} !important;
         width: {BTN_WIDTH} !important; 
         height: {BTN_HEIGHT} !important;
-        margin: 15px auto !important; /* Auto margins for horizontal lock */
+        margin: 15px auto !important;
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
         box-shadow: 0 8px 15px rgba(0,0,0,0.6) !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
     }}
-
     div.stButton > button:hover {{
         background-color: {BTN_HOVER_COLOR} !important;
         transform: translateY(-5px) !important;
-        box-shadow: 0 12px 25px rgba(167, 201, 87, 0.5) !important;
+        box-shadow: 0 12px 25px rgba(167, 201, 87, 0.4) !important;
     }}
-
     div.stButton > button p {{ 
         font-size: {BTN_TEXT_SIZE} !important; 
         font-weight: {BTN_FONT_WEIGHT} !important; 
         color: {BTN_TEXT_COLOR} !important;
     }}
 
-    /* LABELS REMAIN LEFT ALIGNED */
+    /* STRICT LEFT ALIGN FOR LABELS & INPUTS */
+    [data-testid="stVerticalBlock"] {{ align-items: flex-start !important; }}
     label {{ 
         color: {LABEL_COLOR} !important; 
         font-weight: bold !important; 
@@ -105,6 +103,9 @@ custom_css = f"""
     }}
     
     .hindi-heading, .english-heading {{ text-align: center !important; width: 100% !important; }}
+    .hindi-heading {{ color: {HEADING_COLOR}; font-size: 20px; font-weight: 900; }}
+    .english-heading {{ color: {HEADING_COLOR}; font-size: 18px; font-weight: bold; margin-bottom: 20px; }}
+    .err-msg {{ color: #FF4B4B; font-size: 13px; font-weight: bold; text-align: left !important; width: 100%; }}
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -114,8 +115,6 @@ st.markdown(custom_css, unsafe_allow_html=True)
 # ==========================================
 if 'page' not in st.session_state: st.session_state.page = 'landing'
 if 'hrms_verified' not in st.session_state: st.session_state.hrms_verified = False
-if 'super_verified' not in st.session_state: st.session_state.super_verified = False
-if 'active_super' not in st.session_state: st.session_state.active_super = {}
 
 def go_to(page_name):
     st.session_state.page = page_name
@@ -131,72 +130,5 @@ def generate_ref_no(hrms_id, df_grievance):
 # PAGE CONTENT
 # ==========================================
 
-if st.session_state.page == 'landing':
-    if os.path.exists(LOGO_PATH): st.image(LOGO_PATH, width=LOGO_WIDTH)
-    st.markdown('<div class="hindi-heading">सवारी डिब्बा कारखाना, आलमबाग, लखनऊ</div>', unsafe_allow_html=True)
-    st.markdown('<div class="english-heading">Grievance Management System</div>', unsafe_allow_html=True)
-    if st.button("📝 नया Grievance दर्ज करें"): go_to('new_form')
-    if st.button("🔍 ग्रीवांस की वर्तमान स्थिति जानें"): go_to('status_check')
-    if st.button("🔐 Officer/ Admin Login"): go_to('login')
-
-elif st.session_state.page == 'new_form':
-    st.markdown('<div class="hindi-heading">Grievance Registration</div>', unsafe_allow_html=True)
-    if not st.session_state.hrms_verified:
-        hrms_input = st.text_input("Enter HRMS ID*", max_chars=6).upper().strip()
-        if st.button("Verify ID / सत्यापित करें"):
-            try:
-                df = pd.DataFrame(get_sheet("EMPLOYEE_MAPPING").get_all_records())
-                match = df[df['HRMS_ID'] == hrms_input]
-                if not match.empty:
-                    st.session_state.found_emp_name = match.iloc[0]['EMPLOYEE_NAME']
-                    st.session_state.hrms_verified = True
-                    st.session_state.active_hrms = hrms_input
-                    st.rerun()
-                else: st.error("❌ HRMS ID not found.")
-            except Exception as e: st.error(f"Error: {e}")
-    else:
-        st.success(f"✅ Employee Found: {st.session_state.found_emp_name}")
-        # Dropdowns and text areas would follow here...
-        if st.button("⬅️ Back to Home"):
-            st.session_state.hrms_verified = False
-            go_to('landing')
-
-elif st.session_state.page == 'login':
-    st.markdown('<div class="hindi-heading">Superuser Login</div>', unsafe_allow_html=True)
-    hrms_locked = st.session_state.super_verified
-    s_hrms = st.text_input("Enter Your HRMS ID", value=st.session_state.active_super.get('HRMS_ID', ""), disabled=hrms_locked).upper().strip()
-
-    if not st.session_state.super_verified:
-        if st.button("Find User / यूजर खोजें"):
-            try:
-                df_off = pd.DataFrame(get_sheet("OFFICER_MAPPING").get_all_records())
-                match = df_off[df_off['HRMS_ID'] == s_hrms]
-                if not match.empty:
-                    st.session_state.active_super = match.iloc[0].to_dict()
-                    st.session_state.super_verified = True
-                    st.rerun()
-                else: st.error("❌ HRMS ID not found.")
-            except Exception as e: st.error(f"Error: {e}")
-    else:
-        u = st.session_state.active_super
-        st.success(f"✅ USER Found: {u['NAME']}, {u['RANK']}")
-        login_key = st.text_input("Enter Key", type="password")
-        if st.button("Login / लॉगिन करें"):
-            if str(login_key) == str(u['LOGIN_KEY']):
-                role = u['ROLE'].upper()
-                if role == "ADMIN": go_to('admin_dashboard')
-                elif role == "OFFICER": go_to('officer_dashboard')
-                elif role == "BOTH": go_to('role_selection')
-                st.rerun()
-            else: st.error("❌ Invalid Key.")
-    
-    if st.button("⬅️ Back to Home"):
-        st.session_state.super_verified = False
-        st.session_state.active_super = {}
-        go_to('landing')
-
-# Placeholder for dashboards...
-elif st.session_state.page == 'role_selection':
-    st.markdown('<div class="english-heading">Choose Dashboard</div>', unsafe_allow_html=True)
-    if st.button("🛠️ Admin Dashboard"): go_to('admin_dashboard')
-    if st.button("📋 Officer Dashboard"): go_to('officer_dashboard')
+# --- PAGE 1: LANDING ---
+if st.session_state.page ==
