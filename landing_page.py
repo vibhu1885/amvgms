@@ -13,7 +13,7 @@ import gspread
 # ==========================================
 LOGO_PATH = "assets/office_logo.png"
 LOGO_WIDTH = 225
-APP_BG_COLOR = "#2a2a36"
+APP_BG_COLOR = "#171515"
 
 # Initialize State
 if 'page' not in st.session_state: st.session_state.page = 'landing'
