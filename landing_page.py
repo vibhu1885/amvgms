@@ -53,6 +53,39 @@ container_max_width = "1200px" if is_dashboard else "480px"
 
 st.markdown(f"""
 <style>
+/* ============================================================ */
+    /* 🚨 NIGHT MODE OVERRIDE MODULE (Fixes Invisible Text)      */
+    /* ============================================================ */
+    
+    /* 1. Force Main Text White (Overrides Phone's Day Mode Black) */
+    .stApp, .stMarkdown, .stText, h1, h2, h3, h4, h5, h6, p, label, span, div {{
+        color: white !important;
+    }}
+
+    /* 2. Force Input Boxes to look like Night Mode (Dark Grey Bg + White Text) */
+    .stTextInput input, .stTextArea textarea {{
+        background-color: #2c2e3a !important; 
+        color: white !important;
+        border: 1px solid #444 !important;
+    }}
+    
+    /* 3. Force Select/Dropdown Boxes to Night Mode */
+    .stSelectbox div[data-baseweb="select"] {{
+        background-color: #2c2e3a !important;
+        color: white !important;
+    }}
+    /* Dropdown Options List */
+    div[role="listbox"] ul {{
+        background-color: #2c2e3a !important;
+    }}
+    div[role="option"] {{
+        color: white !important;
+    }}
+
+    /* ============================================================ */
+    /* END OVERRIDE MODULE                                         */
+    /* ============================================================ */
+    
     /* HIDE HEADER/FOOTER */
     header, footer, [data-testid="stHeader"] {{ visibility: hidden; height: 0; }}
     .stApp {{ background-color: {APP_BG_COLOR}; }}
