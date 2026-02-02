@@ -252,7 +252,7 @@ elif st.session_state.page == 'status_check':
                 matches = df[df['HRMS_ID'].astype(str) == hrms_in]
                 
                 if not matches.empty:
-                    st.success(f"Found {len(matches)} Record(s)")
+                    st.success(f"Found {len(matches)} Grievance(s)")
                     matches = matches.iloc[::-1]
                     
                     for i, row in matches.iterrows():
